@@ -104,3 +104,29 @@ function setConfigFormDefaultValues() {
         }
     }
 }
+
+function loadBootstrapTable(dataUrl, table) {
+    $.getJSON(dataUrl, function (data) {
+        let tableData = [];
+        data.forEach((element) => {
+            let tableRowJson = {};
+            tableRowJson['timestamp'] = element.body.timestamp;
+            tableRowJson['conversationId'] = element.conversationid;
+            tableRowJson['message'] = element.body.message;
+            tableRowJson['rating'] = element.body.rate;
+
+            tableData.push(tableRowJson);
+        });
+
+        $('#' + table).bootstrapTable({
+            data: tableData,
+            stickyHeader: true,
+        });
+    });
+}
+
+function datesSorter(a, b) {
+    if (new Date(a) < new Date(b)) return 1;
+    if (new Date(a) > new Date(b)) return -1;
+    return 0;
+}

@@ -6,6 +6,7 @@ if (configData) {
     let w2Switch = configData['w2_switch'];
     let w2GpeSwitch = configData['w2_gpe_switch'];
     let w2CobrowseSwitch = configData['w2_cobrowse_switch'];
+    let w2SurveySwitch = configData['w2_survey_switch'];
     let w3Switch = configData['w3_switch'];
     let w4Switch = configData['w4_switch'];
 
@@ -380,6 +381,141 @@ if (configData) {
             setTimeout(function () {
                 ac('record', 'timeout30seconds_submitted');
             }, 30000);
+        }
+
+        if (w2SurveySwitch == 'on') {
+            if (!window._genesys.widgets.extensions) {
+                window._genesys.widgets.extensions = {};
+            }
+
+            window._genesys.widgets.extensions['oSurveyPlugin'] = function ($, CXBus, Common) {
+                var oSurveyPlugin = CXBus.registerPlugin('SurveyPlugin');
+                oSurveyPlugin.subscribe('WebChat.completed', function (data) {
+                    let conversationId = data.data.id;
+                    var surveyHtml = `
+                <div class="container">
+                    <table>
+                        <tr>
+                            <td>
+                                <label class="cx-control-label i18n">How are you satisfied with our service?</label>
+                            </td>
+                        </tr>
+                        <br/>
+                        <tr>
+                            <td>
+                                <div class="rating" name="rating-score">
+                                    <input id="star5" name="star" type="radio" value="5" class="radio-btn hide" />
+                                    <label for="star5" >☆</label>
+                                    <input id="star4" name="star" type="radio" value="4" class="radio-btn hide" />
+                                    <label for="star4" >☆</label>
+                                    <input id="star3" name="star" type="radio" value="3" class="radio-btn hide" />
+                                    <label for="star3" >☆</label>
+                                    <input id="star2" name="star" type="radio" value="2" class="radio-btn hide" />
+                                    <label for="star2" >☆</label>
+                                    <input id="star1" name="star" type="radio" value="1" class="radio-btn hide" />
+                                    <label for="star1" >☆</label>
+                                    <div class="clear"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label class="cx-control-label i18n">Please share your comments with us!</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <textarea class="cx-input cx-form-control" name="comments" maxlength="100" placeholder="Optional"></textarea>
+                            </td>
+                        </tr>
+                    </table>
+                </div>`;
+
+                    oSurveyPlugin.command('WebChat.close');
+                    oSurveyPlugin
+                        .command('Toaster.open', {
+                            type: 'generic',
+                            title: 'Rate us',
+                            body: surveyHtml,
+                            icon: 'chat',
+                            controls: 'close',
+                            immutable: false,
+                            buttons: {
+                                type: 'binary',
+                                primary: 'Submit',
+                                secondary: 'No, thanks',
+                            },
+                        })
+                        .done(function (e) {
+                            $(e.html)
+                                .find('.cx-btn.cx-btn-primary')
+                                .on('click', function () {
+                                    $.ajax({
+                                        url: 'https://gcloud-app.herokuapp.com/survey/insert',
+                                        dataType: 'json',
+                                        type: 'post',
+                                        data: {
+                                            conversationId: conversationId,
+                                            surveyBody: {
+                                                message: $('[name=comments]').val(),
+                                                rate: $('[name=star]:checked').val(),
+                                                timestamp: new Date(),
+                                            },
+                                        },
+                                        success: function (result, status, xhr) {
+                                            console.log(result);
+                                            oSurveyPlugin.command('Toaster.close').done(function () {
+                                                oSurveyPlugin
+                                                    .command('Toaster.open', {
+                                                        type: 'generic',
+                                                        title: 'Rate us',
+                                                        body: `<table>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="cx-form-success" style="display: block; width: 30px;">
+                                                                <span class="cx-icon cx-theme-icon-positive" data-icon="alert-checkmark"
+                                                                    ><svg version="1.1" viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path class="cx-svg-icon-tone1" d="M50,.13A49.85,49.85,0,1,0,99.84,50,49.84,49.84,0,0,0,50,.13ZM40.62,76.75,21.08,57.21l9.63-9.63,9.64,9.63,28.9-28.9,9.63,9.63Z"></path></svg
+                                                                ></span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="cx-form-success" style="display: block"><label class="cx-control-label i18n" data-message="Sent">Thank you for your participation</label></div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                                `,
+                                                        icon: 'chat',
+                                                        controls: 'close',
+                                                        immutable: false,
+                                                        buttons: {
+                                                            type: 'default',
+                                                            secondary: 'Close',
+                                                        },
+                                                    })
+                                                    .done(function (e) {
+                                                        $(e.html)
+                                                            .find('.cx-btn.cx-btn-default')
+                                                            .on('click', function () {
+                                                                oSurveyPlugin.command('Toaster.close');
+                                                            });
+                                                    });
+                                            });
+                                        },
+                                        error: function (xhr, status, error) {
+                                            console.log(error);
+                                        },
+                                    });
+                                });
+
+                            $(e.html)
+                                .find('.cx-btn.cx-btn-default')
+                                .on('click', function () {
+                                    oSurveyPlugin.command('Toaster.close');
+                                });
+                        });
+                });
+            };
         }
     }
 

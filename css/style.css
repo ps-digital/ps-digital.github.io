@@ -12,6 +12,53 @@ html {
     overflow-x: hidden;
 }
 
+.txt-center {
+    text-align: center;
+}
+.hide {
+    display: none !important;
+}
+
+.clear {
+    float: none;
+    clear: both;
+}
+
+.rating {
+    unicode-bidi: bidi-override;
+    text-align: center;
+    right: 15%;
+    position: relative;
+}
+
+.rating > label {
+    float: right;
+    display: inline;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    width: 1em;
+    font-size: 30px !important;
+    cursor: pointer;
+    color: #000;
+}
+
+.rating > label:hover,
+.rating > label:hover ~ label,
+.rating > input.radio-btn:checked ~ label {
+    color: transparent;
+}
+
+.rating > label:hover:before,
+.rating > label:hover ~ label:before,
+.rating > input.radio-btn:checked ~ label:before,
+.rating > input.radio-btn:checked ~ label:before {
+    content: '\2605';
+    position: absolute;
+    left: 0;
+    color: #ffd700;
+}
+
 .genesys-chat {
     width: 400px;
     height: 600px;
