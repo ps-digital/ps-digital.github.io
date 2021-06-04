@@ -368,7 +368,18 @@ if (configData) {
                 d.parentNode.insertBefore(u, d);
             })(window, document, 'script', 'https://apps.' + w2_baseUrl + '/journey/sdk/js/web/v1/ac.js', 'ac');
             ac('init', w2_orgId, { region: w2_environment });
-            ac('pageview');
+            ac('pageview', {
+                title: location.pathname,
+            });
+
+            ac('forms:track', '*', {
+                captureFormDataOnAbandon: true,
+                captureFormDataOnSubmit: false,
+            });
+
+            setTimeout(function () {
+                ac('record', 'timeout30seconds_submitted');
+            }, 30000);
         }
     }
 

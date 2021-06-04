@@ -25,6 +25,16 @@ function updateConfig() {
     let formData = $('form').serializeObject();
     let email = formData.email;
 
+    if (email == 'bilal@emeapspractices.com') {
+        bootbox.alert({
+            message: `<span class="text-danger">❌ Validation Error: </span>Please use a different email address.`,
+            backdrop: true,
+            className: 'rubberBand animated',
+        });
+
+        return false;
+    }
+
     let switchArray = [formData.w1_switch, formData.w2_switch, formData.w3_switch];
     let onCounts = switchArray.filter((x) => x === 'on').length;
 
