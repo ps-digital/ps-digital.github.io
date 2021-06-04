@@ -40,7 +40,7 @@ function updateConfig() {
 
     let dialog = showLoading();
 
-    $.post('http://dev.localhost.com:4999/config/record/upsert', { email: email, data: formData }).done(function (data) {
+    $.post('https://gcloud-app.herokuapp.com/config/record/upsert', { email: email, data: formData }).done(function (data) {
         dialog.modal('hide');
         localStorage.setItem('configData', JSON.stringify(formData));
 
@@ -61,7 +61,7 @@ function loadConfig() {
 
     let dialog = showLoading();
 
-    $.post('http://dev.localhost.com:4999/config/record/get', { email: email })
+    $.post('https://gcloud-app.herokuapp.com/config/record/get', { email: email })
         .done(function (data) {
             dialog.modal('hide');
             if (data.data) {

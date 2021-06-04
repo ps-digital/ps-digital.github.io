@@ -404,7 +404,7 @@ if (configData) {
                 setInterval(function () {
                     $.ajax({
                         type: 'POST',
-                        url: 'http://dev.localhost.com:4999/chat/status',
+                        url: 'https://gcloud-app.herokuapp.com/chat/status',
                         data: {
                             clientId: w4_clientId,
                             clientSecret: w4_clientSecret,
