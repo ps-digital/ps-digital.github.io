@@ -56,12 +56,12 @@ if (configData) {
                 companyLogo: {
                     width: 600,
                     height: 149,
-                    url: 'images/logo.png',
+                    url: 'https://ps-digital.github.io/images/logo.png',
                 },
                 companyLogoSmall: {
                     width: 25,
                     height: 25,
-                    url: 'images/logo.png',
+                    url: 'https://ps-digital.github.io/images/logo.png',
                 },
                 agentAvatar: {
                     width: 462,
