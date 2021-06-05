@@ -77,6 +77,7 @@ function loadConfig() {
             if (data.data) {
                 localStorage.setItem('configData', JSON.stringify(data.data));
                 setConfigFormDefaultValues();
+                window.location.reload();
             }
         })
         .fail(function (error) {
