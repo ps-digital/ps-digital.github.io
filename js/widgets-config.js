@@ -7,6 +7,7 @@ if (configData) {
     let w2GpeSwitch = configData['w2_gpe_switch'];
     let w2CobrowseSwitch = configData['w2_cobrowse_switch'];
     let w2SurveySwitch = configData['w2_survey_switch'];
+    let w2TranscriptSwitch = configData['w2_transcript_switch'];
     let w3Switch = configData['w3_switch'];
     let w4Switch = configData['w4_switch'];
 
@@ -37,6 +38,9 @@ if (configData) {
     let w4_emergencyGroupId = configData['w4_emergencyGroupId'];
     let w4_queueId = configData['w4_queueId'];
 
+    /**
+     * Logic to handle when the Widgets version 1 switch is ON
+     */
     if (w1Switch == 'on') {
         var widgetScriptElement = document.createElement('script');
         widgetScriptElement.setAttribute('src', 'https://apps.' + w1_baseUrl + '/webchat/jsapi-v1.js');
@@ -140,7 +144,73 @@ if (configData) {
         document.head.append(widgetScriptElement);
     }
 
+    /**
+     * Logic to handle when the Widgets version 2 switch is ON
+     */
     if (w2Switch == 'on') {
+        // Define the fields for the chat form
+        let form = {
+            wrapper: '<table></table>',
+            inputs: [
+                {
+                    id: 'cx_webchat_form_firstname',
+                    name: 'firstname',
+                    maxlength: '100',
+                    placeholder: 'Required',
+                    label: 'First Name',
+                    validateWhileTyping: true,
+                    validate: function (event, form, input, label, $, CXBus, Common) {
+                        if (input && input.val() && input.val().length >= 4) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    },
+                },
+                {
+                    id: 'cx_webchat_form_email',
+                    name: 'email',
+                    maxlength: '100',
+                    placeholder: 'Required',
+                    label: 'Email',
+                    validateWhileTyping: false,
+                    validate: function (event, form, input, label, $, CXBus, Common) {
+                        let mailRegEx = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+                        if (input && input.val() && mailRegEx.test(input.val())) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    },
+                },
+                {
+                    id: 'cx_webchat_form_subject',
+                    name: 'subject',
+                    maxlength: '100',
+                    placeholder: 'Optional',
+                    label: 'Subject',
+                },
+            ],
+        };
+
+        /**
+         * Logic to handle when the chat transcript switch is ON
+         */
+        if (w2TranscriptSwitch == 'on') {
+            form.inputs.push({
+                id: 'cx_webchat_form_transcript',
+                name: 'transcript',
+                maxlength: '100',
+                placeholder: 'Required',
+                label: 'Email chat transcript',
+                wrapper: '<tr><th>{label}</th><td>{input}</td></tr>',
+                type: 'checkbox',
+            });
+        }
+
+        /**
+         * Logic to handle when the Co-browse switch is ON
+         */
         if (w2CobrowseSwitch == 'on') {
             window._genesys = {
                 widgets: {
@@ -163,49 +233,7 @@ if (configData) {
                                 },
                             },
                         },
-                        form: {
-                            wrapper: '<table></table>',
-                            inputs: [
-                                {
-                                    id: 'cx_webchat_form_firstname',
-                                    name: 'firstname',
-                                    maxlength: '100',
-                                    placeholder: 'Required',
-                                    label: 'First Name',
-                                    validateWhileTyping: true,
-                                    validate: function (event, form, input, label, $, CXBus, Common) {
-                                        if (input && input.val() && input.val().length >= 4) {
-                                            return true;
-                                        } else {
-                                            return false;
-                                        }
-                                    },
-                                },
-                                {
-                                    id: 'cx_webchat_form_email',
-                                    name: 'email',
-                                    maxlength: '100',
-                                    placeholder: 'Required',
-                                    label: 'Email',
-                                    validateWhileTyping: false,
-                                    validate: function (event, form, input, label, $, CXBus, Common) {
-                                        let mailRegEx = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-                                        if (input && input.val() && mailRegEx.test(input.val())) {
-                                            return true;
-                                        } else {
-                                            return false;
-                                        }
-                                    },
-                                },
-                                {
-                                    id: 'cx_webchat_form_subject',
-                                    name: 'subject',
-                                    maxlength: '100',
-                                    placeholder: 'Optional',
-                                    label: 'Subject',
-                                },
-                            ],
-                        },
+                        form: form,
                     },
                     sidebar: {
                         showOnStartup: true,
@@ -292,49 +320,7 @@ if (configData) {
                                 },
                             },
                         },
-                        form: {
-                            wrapper: '<table></table>',
-                            inputs: [
-                                {
-                                    id: 'cx_webchat_form_firstname',
-                                    name: 'firstname',
-                                    maxlength: '100',
-                                    placeholder: 'Required',
-                                    label: 'First Name',
-                                    validateWhileTyping: true,
-                                    validate: function (event, form, input, label, $, CXBus, Common) {
-                                        if (input && input.val() && input.val().length >= 4) {
-                                            return true;
-                                        } else {
-                                            return false;
-                                        }
-                                    },
-                                },
-                                {
-                                    id: 'cx_webchat_form_email',
-                                    name: 'email',
-                                    maxlength: '100',
-                                    placeholder: 'Required',
-                                    label: 'Email',
-                                    validateWhileTyping: false,
-                                    validate: function (event, form, input, label, $, CXBus, Common) {
-                                        let mailRegEx = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-                                        if (input && input.val() && mailRegEx.test(input.val())) {
-                                            return true;
-                                        } else {
-                                            return false;
-                                        }
-                                    },
-                                },
-                                {
-                                    id: 'cx_webchat_form_subject',
-                                    name: 'subject',
-                                    maxlength: '100',
-                                    placeholder: 'Optional',
-                                    label: 'Subject',
-                                },
-                            ],
-                        },
+                        form: form,
                     },
                     extensions: {},
                 },
@@ -353,6 +339,9 @@ if (configData) {
             document.head.append(widgetScriptElement);
         }
 
+        /**
+         * Logic to handle when Predictive Engagement switch is ON
+         */
         if (w2GpeSwitch == 'on') {
             (function (a, t, c, l, o, u, d) {
                 a['_genesysJourneySdk'] = o;
@@ -383,6 +372,9 @@ if (configData) {
             }, 30000);
         }
 
+        /**
+         * Logic to handle when the 3rd Party Survey switch is ON
+         */
         if (w2SurveySwitch == 'on') {
             if (!window._genesys.widgets.extensions) {
                 window._genesys.widgets.extensions = {};
@@ -519,6 +511,9 @@ if (configData) {
         }
     }
 
+    /**
+     * Logic to handle when the Web Messager switch is ON
+     */
     if (w3Switch == 'on') {
         (function (g, e, n, es, ys) {
             g['_genesysJs'] = e;
@@ -540,6 +535,9 @@ if (configData) {
         });
     }
 
+    /**
+     * Logic to handle when the Agent Availability switch is ON
+     */
     if (w4Switch == 'on') {
         if (w2Switch == 'on') {
             if (!window._genesys.widgets.extensions) {
