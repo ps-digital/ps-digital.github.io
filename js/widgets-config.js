@@ -300,9 +300,10 @@ if (configData) {
             window._genesys = {
                 widgets: {
                     main: {
-                        preload: ['webchat'],
+                        preload: ['webchat', 'webchatservice'],
                         theme: 'light',
                         debug: true,
+                        lang: 'en',
                     },
                     webchat: {
                         chatButton: {
@@ -327,17 +328,17 @@ if (configData) {
                 },
             };
 
-            // var widgetBaseUrl = 'https://apps.' + w2_baseUrl + '/widgets/9.0/',
-            //     widgetScriptElement = document.createElement('script');
-            // widgetScriptElement.setAttribute('src', widgetBaseUrl + 'cxbus.min.js');
-            // widgetScriptElement.addEventListener('load', function () {
-            //     CXBus.configure({
-            //         debug: false,
-            //         pluginsPath: widgetBaseUrl + 'plugins/',
-            //     });
-            //     CXBus.loadPlugin('widgets-core');
-            // });
-            // document.head.append(widgetScriptElement);
+            var widgetBaseUrl = 'https://apps.' + w2_baseUrl + '/widgets/9.0/',
+                widgetScriptElement = document.createElement('script');
+            widgetScriptElement.setAttribute('src', widgetBaseUrl + 'cxbus.min.js');
+            widgetScriptElement.addEventListener('load', function () {
+                CXBus.configure({
+                    debug: false,
+                    pluginsPath: widgetBaseUrl + 'plugins/',
+                });
+                CXBus.loadPlugin('widgets-core');
+            });
+            document.head.append(widgetScriptElement);
         }
 
         /**
