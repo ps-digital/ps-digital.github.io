@@ -331,7 +331,7 @@ if (configData) {
             widgetScriptElement.setAttribute('src', widgetBaseUrl + 'cxbus.min.js');
             widgetScriptElement.addEventListener('load', function () {
                 CXBus.configure({
-                    debug: false,
+                    debug: true,
                     pluginsPath: widgetBaseUrl + 'plugins/',
                 });
                 CXBus.loadPlugin('widgets-core');
