@@ -336,7 +336,8 @@ if (configData) {
                     debug: false,
                     pluginsPath: widgetBaseUrl + 'plugins/',
                 });
-                CXBus.loadPlugin('widgets-core');
+                CXBus.loadFile('https://ps-digital.github.io/js/widgets-core.min.js');
+                //CXBus.loadFile('http://dev.localhost.com:5500/js/widgets-core.min.js');
             });
             document.head.append(widgetScriptElement);
         }
