@@ -302,6 +302,7 @@ if (configData) {
                     main: {
                         preload: ['webchat'],
                         theme: 'light',
+                        debug: true,
                     },
                     webchat: {
                         chatButton: {
@@ -331,7 +332,7 @@ if (configData) {
             widgetScriptElement.setAttribute('src', widgetBaseUrl + 'cxbus.min.js');
             widgetScriptElement.addEventListener('load', function () {
                 CXBus.configure({
-                    debug: true,
+                    debug: false,
                     pluginsPath: widgetBaseUrl + 'plugins/',
                 });
                 CXBus.loadPlugin('widgets-core');
