@@ -297,36 +297,6 @@ if (configData) {
             });
             document.head.append(cobrowseScriptElement);
         } else {
-            window._genesys = {
-                widgets: {
-                    main: {
-                        preload: ['webchat'],
-                        theme: 'light',
-                        debug: true,
-                    },
-                    webchat: {
-                        chatButton: {
-                            enabled: true,
-                        },
-                        transport: {
-                            type: 'purecloud-v2-sockets',
-                            dataURL: 'https://api.' + w2_baseUrl,
-                            deploymentKey: w2_deploymentKey,
-                            orgGuid: w2_orgId,
-                            interactionData: {
-                                routing: {
-                                    targetType: 'QUEUE',
-                                    targetAddress: w2_queueName,
-                                    priority: 2,
-                                },
-                            },
-                        },
-                        form: form,
-                    },
-                    extensions: {},
-                },
-            };
-
             var widgetBaseUrl = 'https://apps.' + w2_baseUrl + '/widgets/9.0/',
                 widgetScriptElement = document.createElement('script');
             widgetScriptElement.setAttribute('src', widgetBaseUrl + 'cxbus.min.js');
@@ -335,6 +305,37 @@ if (configData) {
                     debug: false,
                     pluginsPath: widgetBaseUrl + 'plugins/',
                 });
+
+                window._genesys = {
+                    widgets: {
+                        main: {
+                            preload: ['webchat'],
+                            theme: 'light',
+                            debug: true,
+                        },
+                        webchat: {
+                            chatButton: {
+                                enabled: true,
+                            },
+                            transport: {
+                                type: 'purecloud-v2-sockets',
+                                dataURL: 'https://api.' + w2_baseUrl,
+                                deploymentKey: w2_deploymentKey,
+                                orgGuid: w2_orgId,
+                                interactionData: {
+                                    routing: {
+                                        targetType: 'QUEUE',
+                                        targetAddress: w2_queueName,
+                                        priority: 2,
+                                    },
+                                },
+                            },
+                            form: form,
+                        },
+                        extensions: {},
+                    },
+                };
+
                 CXBus.loadPlugin('widgets-core');
             });
             document.head.append(widgetScriptElement);
