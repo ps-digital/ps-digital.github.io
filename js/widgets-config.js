@@ -220,6 +220,7 @@ if (configData) {
                         lang: 'en',
                     },
                     webchat: {
+                        inviteOnRestoreTimeout: false,
                         transport: {
                             type: 'purecloud-v2-sockets',
                             dataURL: 'https://api.' + w2_baseUrl,
@@ -306,6 +307,7 @@ if (configData) {
                         lang: 'en',
                     },
                     webchat: {
+                        inviteOnRestoreTimeout: false,
                         chatButton: {
                             enabled: true,
                         },
