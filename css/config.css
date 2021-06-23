@@ -1,0 +1,23 @@
+section {
+    padding: 1rem;
+}
+
+.bg-color-1 {
+    background-color: rgb(255, 255, 255);
+}
+
+.bg-color-2 {
+    background-color: rgb(255, 255, 239);
+}
+
+.bg-color-3 {
+    background-color: rgb(247, 247, 247);
+}
+
+.bg-color-4 {
+    background-color: rgb(255, 255, 239);
+}
+
+.bg-color-5 {
+    background-color: rgb(247, 247, 247);
+}
