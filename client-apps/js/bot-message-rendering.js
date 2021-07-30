@@ -15,7 +15,7 @@ const urlParams = new URLSearchParams(window.location.search);
 currentConversationId = urlParams.get('conversationid');
 
 client
-    .loginImplicitGrant('9049644e-ef61-4c1a-8260-7d3d28548a3f', 'http://dev.localhost.com:5500/bot-messages.html', { state: currentConversationId })
+    .loginImplicitGrant('9049644e-ef61-4c1a-8260-7d3d28548a3f', 'https://ps-digital.github.io/client-apps/bot-messages.html', { state: currentConversationId })
     .then((data) => {
         console.log(data);
 
