@@ -61,12 +61,12 @@ if (configData) {
                 companyLogo: {
                     width: 600,
                     height: 149,
-                    url: 'https://ps-digital.github.io/images/logo.png',
+                    url: document.location.origin + '/images/logo.png',
                 },
                 companyLogoSmall: {
                     width: 25,
                     height: 25,
-                    url: 'https://ps-digital.github.io/images/logo.png',
+                    url: document.location.origin + '/images/logo.png',
                 },
                 agentAvatar: {
                     width: 462,
@@ -338,7 +338,7 @@ if (configData) {
                     debug: false,
                     pluginsPath: widgetBaseUrl + 'plugins/',
                 });
-                CXBus.loadFile('https://ps-digital.github.io/js/widgets-core.min.js');
+                CXBus.loadFile(document.location.origin + '/js/widgets-core.min.js');
                 //CXBus.loadFile('http://dev.localhost.com:5500/js/widgets-core.min.js');
             });
             document.head.append(widgetScriptElement);
@@ -348,6 +348,7 @@ if (configData) {
          * Logic to handle when Predictive Engagement switch is ON
          */
         if (w2GpeSwitch == 'on') {
+            document.title = document.location.pathname.replace('/', 'PS Global - ');
             (function (a, t, c, l, o, u, d) {
                 a['_genesysJourneySdk'] = o;
                 (a[o] =
@@ -363,9 +364,7 @@ if (configData) {
                 d.parentNode.insertBefore(u, d);
             })(window, document, 'script', 'https://apps.' + w2_baseUrl + '/journey/sdk/js/web/v1/ac.js', 'ac');
             ac('init', w2_orgId, { region: w2_environment });
-            ac('pageview', {
-                title: location.pathname,
-            });
+            ac('pageview');
 
             ac('forms:track', '*', {
                 captureFormDataOnAbandon: true,
@@ -520,6 +519,8 @@ if (configData) {
      * Logic to handle when the Web Messager switch is ON
      */
     if (w3Switch == 'on') {
+        document.title = document.location.pathname.replace('/', 'PS Global - ');
+
         (function (g, e, n, es, ys) {
             g['_genesysJs'] = e;
             g[e] =
@@ -538,6 +539,13 @@ if (configData) {
             environment: w3_environment,
             deploymentId: w3_deploymentKey,
         });
+
+        // Genesys('subscribe', 'Journey.ready', () => {
+        //     Genesys('command', 'Journey.pageview', {
+        //         pageTitle: location.pathname
+        //     });
+        // });
+
     }
 
     /**

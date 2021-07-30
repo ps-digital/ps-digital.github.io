@@ -131,3 +131,48 @@ function datesSorter(a, b) {
     if (new Date(a) > new Date(b)) return -1;
     return 0;
 }
+
+function getTopDomain() {
+    var i,
+        h,
+        weird_cookie = 'weird_get_top_level_domain=cookie',
+        hostname = document.location.hostname.split('.');
+    for (i = hostname.length - 1; i >= 0; i--) {
+        h = hostname.slice(i).join('.');
+        document.cookie = weird_cookie + ';domain=.' + h + ';';
+        if (document.cookie.indexOf(weird_cookie) > -1) {
+            // We were able to store a cookie! This must be it
+            document.cookie = weird_cookie.split('=')[0] + '=;domain=.' + h + ';expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            return h;
+        }
+    }
+}
+
+function resetGPESession() {
+    document.cookie.split(';').forEach(function (cookie) {
+        var cookieName = cookie.trim().split('=')[0];
+        // If the prefix of the cookie's name matches the one specified, remove it
+        if (cookieName.indexOf('_act') === 0) {
+            console.log(cookieName);
+
+            // Remove the cookie
+            document.cookie = cookieName + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=.' + getTopDomain();
+        }
+
+        if (cookieName.indexOf('_genesys') === 0) {
+            console.log(cookieName);
+
+            // Remove the cookie
+            document.cookie = cookieName + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+        }
+    });
+
+    bootbox.alert({
+        message: `<span class="text-success">✔ Success: </span>A new Predictive Engagement session is created!`,
+        backdrop: true,
+        className: 'rubberBand animated',
+        callback: function () {
+            window.location.reload();
+        },
+    });
+}
