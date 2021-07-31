@@ -2,6 +2,7 @@
 const platformClient = require('platformClient');
 const client = platformClient.ApiClient.instance;
 client.setEnvironment(platformClient.PureCloudRegionHosts.eu_central_1);
+client.setPersistSettings(true, 'sample_app');
 
 // API instances
 const conversationsApi = new platformClient.ConversationsApi();
