@@ -148,9 +148,22 @@
                 padding-top: 8px;
                 justify-content: flex-end;
             }
+            .button {
+                display: inline-block;
+                border: 1px solid #b0cbff;
+                padding: 10px 50px 10px 50px;
+                border-radius: 3px;
+                text-decoration: none;
+                position: fixed;
+                left: 50%;
+                right: 50%;
+                background: transparent;
+                cursor: pointer;
+            }
         </style>
     </head>
     <body style="background-color: white">
         <div class="container"></div>
+        <button class="button" onclick="window.location.reload()">Reload</button>
     </body>
 </html>

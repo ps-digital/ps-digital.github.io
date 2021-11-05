@@ -13,10 +13,10 @@ let currentConversationId = '';
  *                       INITIAL SETUP
  * -------------------------------------------------------------- */
 const urlParams = new URLSearchParams(window.location.search);
-currentConversationId = urlParams.get('conversationid');
+currentConversationId = urlParams.get('conversationId');
 
 client
-    .loginImplicitGrant('9049644e-ef61-4c1a-8260-7d3d28548a3f', 'https://ps-digital.github.io/client-apps/bot-messages.html', { state: currentConversationId })
+    .loginImplicitGrant('9049644e-ef61-4c1a-8260-7d3d28548a3f', 'https://dev.localhost.com:5000/client-apps/bot-messages.html', { state: currentConversationId })
     .then((data) => {
         console.log(data);
 

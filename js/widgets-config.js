@@ -1,3 +1,62 @@
+function showSignInModal() {
+    let locale = {
+        OK: 'I Suppose',
+        CONFIRM: 'Next',
+        CANCEL: 'Cancel',
+    };
+
+    bootbox.addLocale('custom', locale);
+
+    bootbox.prompt({
+        title: 'Please type in your phone number or email address',
+        locale: 'custom',
+        callback: function (result) {
+            if (result) {
+                let username = result;
+
+                locale = {
+                    OK: 'I Suppose',
+                    CONFIRM: 'Login',
+                    CANCEL: 'Cancel',
+                };
+
+                bootbox.addLocale('custom', locale);
+
+                bootbox.prompt({
+                    title: 'Please type in your password',
+                    inputType: 'password',
+                    callback: function (result) {
+                        if (result) {
+                            var dialog = bootbox.dialog({
+                                title: 'Login',
+                                message: '<p><i class="fa fa-spin fa-spinner"></i> Loading...</p>',
+                            });
+
+                            dialog.init(function () {
+                                setTimeout(function () {
+                                    dialog.find('.bootbox-body').html("You're logged in!");
+
+                                    $('#signin-modal').text(username);
+
+                                    if (username.indexOf('@') != -1) {
+                                        ac('pageview', {}, { email: username }, { traitsMapper: [{ fieldName: 'email' }] });
+                                    } else {
+                                        ac('pageview', {}, { workPhone: '+491726298919' }, { traitsMapper: [{ fieldName: 'workPhone' }] });
+                                    }
+                                }, 1500);
+                            });
+                        }
+                    },
+                });
+            }
+        },
+    });
+}
+
+/**
+ * The part below is used mainly based on the settings on the config page
+ */
+
 let configData = localStorage.getItem('configData');
 if (configData) {
     configData = JSON.parse(configData);
@@ -545,7 +604,6 @@ if (configData) {
         //         pageTitle: location.pathname
         //     });
         // });
-
     }
 
     /**

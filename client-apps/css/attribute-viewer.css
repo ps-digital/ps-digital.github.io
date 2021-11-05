@@ -1,0 +1,57 @@
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Roboto', -apple-system, 'Segoe UI', 'Helvetica Neue', Helvetica, 'Droid Sans', Arial, sans-serif;
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    color: #2c3e50;
+}
+.centered {
+    text-align: center;
+}
+.hidden {
+    display: none;
+}
+.padded {
+    padding: 10px;
+}
+a {
+    color: #ff4f1f;
+    text-decoration: none;
+}
+a:hover {
+    color: #ff4f1f;
+    text-decoration: underline;
+}
+.conversation-attribute {
+    width: 100%;
+    border-bottom: 2px solid #e4e9f0;
+}
+span.conversation-attribute-name {
+    font-weight: bold;
+    display: block;
+    padding-bottom: 5px;
+}
+.primary-button {
+    background-color: #2a60c8;
+    border: 1px solid #2455a3;
+    border-radius: 2px;
+    color: #fdfdfd;
+    cursor: pointer;
+    font-family: 'Roboto', -apple-system, 'Segoe UI', 'Helvetica Neue', Helvetica, 'Droid Sans', Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    height: 32px;
+    padding: 0 16px;
+}
+.primary-button:hover {
+    box-shadow: 0 0 1px 1px rgba(34, 37, 41, 0.48);
+}
+.primary-button:active {
+    background-color: #275aad;
+}
