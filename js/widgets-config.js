@@ -370,6 +370,7 @@ if (configData) {
                         chatButton: {
                             enabled: true,
                         },
+                        markdown: true,
                         transport: {
                             type: 'purecloud-v2-sockets',
                             dataURL: 'https://api.' + w2_baseUrl,
