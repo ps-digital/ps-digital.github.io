@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+        <script src="https://sdk-cdn.mypurecloud.com/javascript/196.0.0/purecloud-platform-client-v2.min.js"></script>
+        <style>
+            .hsbc-banner {
+                display: flex;
+                align-items: center;
+                margin-bottom: 20px;
+                background-color: #fff;
+                padding: 10px 20px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .hsbc-banner img {
+                height: 50px;
+            }
+            .btn-add-record {
+                background-color: red;
+                border-color: red;
+                color: white;
+            }
+            .btn-delete {
+                background-color: black;
+                border-color: black;
+                color: white;
+            }
+            .btn-save-record {
+                background-color: red;
+                border-color: red;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="hsbc-banner">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/HSBC_Logo_2018.png" alt="HSBC Logo" />
+        </div>
+        <div class="container mt-4">
+            <button id="addRecord" class="btn btn-add-record mb-3">Add Record</button>
+            <table id="dataTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>LOB</th>
+                        <th>Country</th>
+                        <th>Segment</th>
+                        <th>Language</th>
+                        <th>Tech Intent</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Add Record Modal -->
+        <div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addRecordModalLabel">Add New Record</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addRecordForm">
+                            <div class="form-group">
+                                <label for="key">Key</label>
+                                <input type="text" class="form-control" id="key" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="lob">LOB</label>
+                                <select class="form-control" id="lob" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="country">Country</label>
+                                <select class="form-control" id="country" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="segment">Segment</label>
+                                <select class="form-control" id="segment" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="language">Language</label>
+                                <select class="form-control" id="language" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="techIntent">Tech Intent</label>
+                                <select class="form-control" id="techIntent" required></select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-save-record" id="saveRecord">Save Record</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script>
+            // Constants
+            const CLIENTID = getQueryParam('client_id');
+            const REDIRECTURI = window.location.href;
+            const ENVIRONMNENT = 'euw2.pure.cloud';
+
+            const MIX_INTENTS_DT = getQueryParam('mix_intents_dt');
+            const MIX_REFERENCE_DT = getQueryParam('mix_reference_dt');
+            const TECH_INTENTS_DT = getQueryParam('tech_intents_dt');
+
+            const GET_DT_ACTIONID = getQueryParam('get_dt_actionid');
+            const DELETE_DT_RECORD_ACTION = getQueryParam('delete_dt_record_actionid');
+            const ADD_DT_MIX_RECORD_ACTION = getQueryParam('add_dt_record_actionid');
+
+            const platformClient = require('platformClient');
+            const client = platformClient.ApiClient.instance;
+            const apiInstance = new platformClient.IntegrationsApi();
+
+            client.setEnvironment(ENVIRONMNENT);
+
+            client.loginImplicitGrant(CLIENTID, REDIRECTURI);
+
+            // Helper functions
+            function getQueryParam(param) {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get(param);
+            }
+
+            async function fetchDataTableRows(dataTableId, actionId, pageNumber = 1, allData = []) {
+                let response = await apiInstance.postIntegrationsActionExecute(actionId, {
+                    DataTableId: dataTableId,
+                    PageNumber: pageNumber,
+                });
+
+                response = JSON.parse(response.result);
+
+                if (response.entities) {
+                    const data = response.entities;
+                    if (Array.isArray(data)) {
+                        allData = allData.concat(data);
+                    } else {
+                        console.error('Entities data is not in the expected format');
+                    }
+                } else {
+                    console.error('Entities data is empty or not present in the response');
+                }
+
+                if (response.total > pageNumber * 25) {
+                    return await fetchDataTableRows(dataTableId, actionId, pageNumber + 1, allData);
+                }
+
+                return allData;
+            }
+
+            function createOptionElement(value) {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                return option;
+            }
+
+            function populateDropdown(dropdown, values) {
+                values.forEach((value) => dropdown.appendChild(createOptionElement(value)));
+            }
+
+            async function populateDropdowns() {
+                const referenceData = await fetchDataTableRows(MIX_REFERENCE_DT, GET_DT_ACTIONID);
+
+                const lobDropdown = document.getElementById('lob');
+                const countryDropdown = document.getElementById('country');
+                const segmentDropdown = document.getElementById('segment');
+                const languageDropdown = document.getElementById('language');
+
+                referenceData.forEach((row) => {
+                    const values = row.Intent_Values.split(',');
+                    if (row.key.includes('LOB')) {
+                        populateDropdown(lobDropdown, values);
+                    } else if (row.key.includes('Country')) {
+                        populateDropdown(countryDropdown, values);
+                    } else if (row.key.includes('Segment')) {
+                        populateDropdown(segmentDropdown, values);
+                    } else if (row.key.includes('Language')) {
+                        populateDropdown(languageDropdown, values);
+                    }
+                });
+
+                const techIntentsData = await fetchDataTableRows(TECH_INTENTS_DT, GET_DT_ACTIONID);
+                const techIntentDropdown = document.getElementById('techIntent');
+                techIntentsData.forEach((row) => {
+                    if (!row.key.toLowerCase().startsWith('default')) {
+                        techIntentDropdown.appendChild(createOptionElement(row.key));
+                    }
+                });
+            }
+
+            async function addDataTableRow(dataTableId, actionId, newRow) {
+                const payload = {
+                    datatableId: dataTableId,
+                    key: newRow.key,
+                    techIntent: newRow.TECH_Intent,
+                };
+
+                const response = await apiInstance.postIntegrationsActionExecute(actionId, payload);
+
+                if (response.result) {
+                    console.log('Record added successfully');
+                } else {
+                    console.error('Error adding record:', response);
+                }
+            }
+
+            async function deleteDataTableRow(dataTableId, actionId, key) {
+                const payload = {
+                    datatableId: dataTableId,
+                    key: key,
+                };
+
+                const response = await apiInstance.postIntegrationsActionExecute(actionId, payload);
+
+                if (response.result === 'null') {
+                    console.log('Record deleted successfully');
+                } else {
+                    console.error('Error deleting record:', response);
+                }
+            }
+
+            function displayTable(data) {
+                const tbody = document.querySelector('#dataTable tbody');
+                tbody.innerHTML = '';
+
+                data.forEach((row, index) => {
+                    const rowData = row.key.split('_');
+                    const techIntent = row.TECH_Intent;
+                    const tableRow = document.createElement('tr');
+
+                    rowData.forEach((cellData) => {
+                        const cell = document.createElement('td');
+                        cell.textContent = cellData;
+                        tableRow.appendChild(cell);
+                    });
+
+                    const techIntentCell = document.createElement('td');
+                    techIntentCell.textContent = techIntent;
+                    tableRow.appendChild(techIntentCell);
+
+                    const actionsCell = document.createElement('td');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'btn btn-delete btn-sm';
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.disabled = row.key.toLowerCase().includes('default');
+                    deleteButton.onclick = () => confirmDelete(index, row.key);
+
+                    actionsCell.appendChild(deleteButton);
+                    tableRow.appendChild(actionsCell);
+
+                    tbody.appendChild(tableRow);
+                });
+            }
+
+            async function saveRecord() {
+                const key = document.getElementById('key').value;
+                if (/default/i.test(key)) {
+                    alert('The word "default" is reserved and cannot be used in the key.');
+                    return;
+                }
+
+                const lob = document.getElementById('lob').value;
+                const country = document.getElementById('country').value;
+                const segment = document.getElementById('segment').value;
+                const language = document.getElementById('language').value;
+                const techIntent = document.getElementById('techIntent').value;
+
+                if (!key || !lob || !country || !segment || !language || !techIntent) {
+                    alert('Please fill in all fields.');
+                    return;
+                }
+
+                const newRow = {
+                    key: [key, lob, country, segment, language].join('_'),
+                    TECH_Intent: techIntent,
+                };
+
+                await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
+                data.push(newRow);
+                displayTable(data);
+                $('#addRecordModal').modal('hide');
+            }
+
+            function confirmDelete(index, key) {
+                if (confirm('Are you sure you want to delete this record?')) {
+                    deleteRecord(index, key);
+                }
+            }
+
+            async function deleteRecord(index, key) {
+                await deleteDataTableRow(MIX_INTENTS_DT, DELETE_DT_RECORD_ACTION, key);
+                data.splice(index, 1);
+                displayTable(data);
+            }
+
+            // Event listeners
+            document.getElementById('addRecord').addEventListener('click', () => {
+                $('#addRecordModal').modal('show');
+            });
+            document.getElementById('saveRecord').addEventListener('click', saveRecord);
+
+            // Initial data load
+            let data = [];
+            (async function init() {
+                data = await fetchDataTableRows(MIX_INTENTS_DT, GET_DT_ACTIONID);
+                displayTable(data);
+                await populateDropdowns();
+            })();
+        </script>
+    </body>
+</html>

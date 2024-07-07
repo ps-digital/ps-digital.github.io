@@ -2,6 +2,7 @@ const platformClient = require('platformClient');
 const clientId = '9049644e-ef61-4c1a-8260-7d3d28548a3f';
 const redirectUri = 'https://dev.localhost.com:5000/client-apps/attribute-viewer.html';
 const client = platformClient.ApiClient.instance;
+client.setEnvironment(platformClient.PureCloudRegionHosts.eu_central_1);
 const urlParams = new URLSearchParams(window.location.search);
 var environment = urlParams.get('environment');
 var state = environment + '|' + urlParams.get('conversationId');
