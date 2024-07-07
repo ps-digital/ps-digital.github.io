@@ -30,6 +30,9 @@
                 border-color: red;
                 color: white;
             }
+            .search-bar {
+                margin-bottom: 20px;
+            }
         </style>
     </head>
     <body>
@@ -37,6 +40,7 @@
             <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/HSBC_Logo_2018.png" alt="HSBC Logo" />
         </div>
         <div class="container mt-4">
+            <input type="text" id="searchInput" class="form-control search-bar" placeholder="Search for records..." />
             <button id="addRecord" class="btn btn-add-record mb-3">Add Record</button>
             <table id="dataTable" class="table table-striped">
                 <thead>
@@ -263,17 +267,17 @@
             }
 
             async function saveRecord() {
-                const key = document.getElementById('key').value;
+                const key = document.getElementById('key').value.toLowerCase();
                 if (/default/i.test(key)) {
                     alert('The word "default" is reserved and cannot be used in the key.');
                     return;
                 }
 
-                const lob = document.getElementById('lob').value;
-                const country = document.getElementById('country').value;
-                const segment = document.getElementById('segment').value;
-                const language = document.getElementById('language').value;
-                const techIntent = document.getElementById('techIntent').value;
+                const lob = document.getElementById('lob').value.toLowerCase();
+                const country = document.getElementById('country').value.toLowerCase();
+                const segment = document.getElementById('segment').value.toLowerCase();
+                const language = document.getElementById('language').value.toLowerCase();
+                const techIntent = document.getElementById('techIntent').value.toLowerCase();
 
                 if (!key || !lob || !country || !segment || !language || !techIntent) {
                     alert('Please fill in all fields.');
@@ -303,11 +307,19 @@
                 displayTable(data);
             }
 
+            function filterTable(query) {
+                const filteredData = data.filter((row) => row.key.toLowerCase().includes(query.toLowerCase()) || row.TECH_Intent.toLowerCase().includes(query.toLowerCase()));
+                displayTable(filteredData);
+            }
+
             // Event listeners
             document.getElementById('addRecord').addEventListener('click', () => {
                 $('#addRecordModal').modal('show');
             });
             document.getElementById('saveRecord').addEventListener('click', saveRecord);
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                filterTable(e.target.value);
+            });
 
             // Initial data load
             let data = [];
