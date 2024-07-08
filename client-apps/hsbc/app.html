@@ -231,7 +231,9 @@
                 } catch (error) {
                     alert('Error adding record: Ensure record does not exist already');
                     console.error('Error adding record:', error);
+                    return false;
                 }
+                return true;
             }
 
             async function deleteDataTableRow(dataTableId, actionId, key) {
@@ -310,10 +312,12 @@
                     TECH_Intent: techIntent,
                 };
 
-                await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
-                data.push(newRow);
-                displayTable(data);
-                $('#addRecordModal').modal('hide');
+                const success = await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
+                if (success) {
+                    data.push(newRow);
+                    displayTable(data);
+                    $('#addRecordModal').modal('hide');
+                }
             }
 
             function confirmDelete(index, key) {
