@@ -289,8 +289,8 @@
                     return;
                 }
 
-                if (/[^a-z0-9_]/i.test(key)) {
-                    alert('The key cannot contain special characters.');
+                if (/^[^a-z0-9]|[^a-z0-9]$/i.test(key)) {
+                    alert('The key cannot start or end with a special character.');
                     return;
                 }
 
