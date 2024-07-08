@@ -33,6 +33,11 @@
             .search-bar {
                 margin-bottom: 20px;
             }
+            .refresh-icon {
+                cursor: pointer;
+                margin-left: 10px;
+                vertical-align: middle;
+            }
         </style>
     </head>
     <body>
@@ -42,6 +47,7 @@
         <div class="container mt-4">
             <input type="text" id="searchInput" class="form-control search-bar" placeholder="Search for records..." />
             <button id="addRecord" class="btn btn-add-record mb-3">Add Record</button>
+            <img src="https://img.icons8.com/ios-glyphs/30/000000/refresh.png" class="refresh-icon" id="refreshIcon" alt="Refresh" />
             <table id="dataTable" class="table table-striped">
                 <thead>
                     <tr>
@@ -214,6 +220,7 @@
                 if (response.result) {
                     console.log('Record added successfully');
                 } else {
+                    alert('Error adding record: Ensure record does not exist already');
                     console.error('Error adding record:', response);
                 }
             }
@@ -267,9 +274,14 @@
             }
 
             async function saveRecord() {
-                const key = document.getElementById('key').value.toLowerCase();
+                let key = document.getElementById('key').value.toLowerCase().trim().replace(/\s+/g, '');
                 if (/default/i.test(key)) {
                     alert('The word "default" is reserved and cannot be used in the key.');
+                    return;
+                }
+
+                if (/[!@#$%^&*(),.?":{}|<>]$/.test(key)) {
+                    alert('The key cannot end with a special character.');
                     return;
                 }
 
@@ -319,6 +331,10 @@
             document.getElementById('saveRecord').addEventListener('click', saveRecord);
             document.getElementById('searchInput').addEventListener('input', (e) => {
                 filterTable(e.target.value);
+            });
+            document.getElementById('refreshIcon').addEventListener('click', async () => {
+                data = await fetchDataTableRows(MIX_INTENTS_DT, GET_DT_ACTIONID);
+                displayTable(data);
             });
 
             // Initial data load
