@@ -20,10 +20,12 @@
                 border-color: red;
                 color: white;
             }
-            .btn-delete {
+            .btn-delete,
+            .btn-edit {
                 background-color: black;
                 border-color: black;
                 color: white;
+                margin-right: 10px;
             }
             .btn-save-record {
                 background-color: red;
@@ -74,7 +76,7 @@
             </table>
         </div>
 
-        <!-- Add Record Modal -->
+        <!-- Add/Edit Record Modal -->
         <div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -144,6 +146,8 @@
             client.setEnvironment(ENVIRONMNENT);
 
             client.loginImplicitGrant(CLIENTID, REDIRECTURI);
+
+            let editIndex = -1;
 
             // Helper functions
             function getQueryParam(param) {
@@ -277,6 +281,13 @@
                     deleteButton.disabled = row.key.toLowerCase().includes('default');
                     deleteButton.onclick = () => confirmDelete(index, row.key);
 
+                    const editButton = document.createElement('button');
+                    editButton.className = 'btn btn-edit btn-sm';
+                    editButton.textContent = 'Edit';
+                    editButton.disabled = row.key.toLowerCase().includes('default');
+                    editButton.onclick = () => editRecord(index);
+
+                    actionsCell.appendChild(editButton);
                     actionsCell.appendChild(deleteButton);
                     tableRow.appendChild(actionsCell);
 
@@ -312,11 +323,47 @@
                     TECH_Intent: techIntent,
                 };
 
-                const success = await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
-                if (success) {
-                    data.push(newRow);
-                    displayTable(data);
-                    $('#addRecordModal').modal('hide');
+                if (editIndex === -1) {
+                    const success = await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
+                    if (success) {
+                        data.push(newRow);
+                    }
+                } else {
+                    const oldKey = data[editIndex].key;
+                    const success = await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
+                    if (success) {
+                        await deleteDataTableRow(MIX_INTENTS_DT, DELETE_DT_RECORD_ACTION, oldKey);
+                        data[editIndex] = newRow;
+                    }
+                    editIndex = -1;
+                }
+
+                displayTable(data);
+                $('#addRecordModal').modal('hide');
+            }
+
+            function editRecord(index) {
+                const record = data[index];
+                const keyParts = record.key.split('_');
+
+                document.getElementById('key').value = keyParts[0];
+                populateSelectElement('lob', keyParts[1]);
+                populateSelectElement('country', keyParts[2]);
+                populateSelectElement('segment', keyParts[3]);
+                populateSelectElement('language', keyParts[4]);
+                populateSelectElement('techIntent', record.TECH_Intent);
+
+                editIndex = index;
+                $('#addRecordModal').modal('show');
+            }
+
+            function populateSelectElement(elementId, value) {
+                const selectElement = document.getElementById(elementId);
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    if (selectElement.options[i].value.toLowerCase() === value.toLowerCase()) {
+                        selectElement.selectedIndex = i;
+                        break;
+                    }
                 }
             }
 
@@ -339,6 +386,8 @@
 
             // Event listeners
             document.getElementById('addRecord').addEventListener('click', () => {
+                document.getElementById('addRecordForm').reset();
+                editIndex = -1;
                 $('#addRecordModal').modal('show');
             });
             document.getElementById('saveRecord').addEventListener('click', saveRecord);
