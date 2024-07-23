@@ -246,12 +246,18 @@
                     key: key,
                 };
 
-                const response = await apiInstance.postIntegrationsActionExecute(actionId, payload);
-
-                if (response.result === 'null') {
-                    console.log('Record deleted successfully');
-                } else {
-                    console.error('Error deleting record:', response);
+                try {
+                    const response = await apiInstance.postIntegrationsActionExecute(actionId, payload);
+                    if (response.result === 'null') {
+                        console.log('Record deleted successfully');
+                        return true;
+                    } else {
+                        console.error('Error deleting record:', response);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Error deleting record:', error);
+                    return false;
                 }
             }
 
@@ -330,10 +336,15 @@
                     }
                 } else {
                     const oldKey = data[editIndex].key;
-                    const success = await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
-                    if (success) {
-                        await deleteDataTableRow(MIX_INTENTS_DT, DELETE_DT_RECORD_ACTION, oldKey);
-                        data[editIndex] = newRow;
+                    const deleteSuccess = await deleteDataTableRow(MIX_INTENTS_DT, DELETE_DT_RECORD_ACTION, oldKey);
+                    console.log(deleteSuccess);
+                    if (deleteSuccess) {
+                        const success = await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
+                        if (success) {
+                            data[editIndex] = newRow;
+                        }
+                    } else {
+                        alert('Error deleting the record.');
                     }
                     editIndex = -1;
                 }
