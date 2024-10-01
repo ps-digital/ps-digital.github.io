@@ -14,13 +14,6 @@
         </div>
 
         <script>
-            const urlParams = new URLSearchParams(window.location.search);
-            const email = urlParams.get('email');
-
-            if (email != 'bilal.zaghloul@genesys.com' && email != 'rod.wilson@hsbc.com') {
-                return;
-            }
-
             window.onload = function () {
                 // Initialize the Genesys Cloud SDK
                 const platformClient = require('platformClient');
@@ -34,6 +27,11 @@
                 const timeoutMinutes = urlParams.get('timeout') ? parseInt(urlParams.get('timeout'), 10) : 30; // Default to 30 minutes if not provided
                 const CLIENT_ID = urlParams.get('clientId'); // Use provided clientId or fallback to default
                 const REDIRECT_URI = urlParams.get('redirectUrl'); // Use provided redirectUrl or fallback to default
+
+                const email = urlParams.get('email');
+                if (email != 'bilal.zaghloul@genesys.com' && email != 'rod.wilson@hsbc.com') {
+                    return;
+                }
 
                 // Set Genesys Cloud environment
                 client.setEnvironment(environment);
