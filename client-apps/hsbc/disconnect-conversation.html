@@ -19,11 +19,12 @@
                 const urlParams = new URLSearchParams(window.location.search);
 
                 const email = urlParams.get('email');
-                const allowedEmails = ['rod.wilson@hsbc.com', 'bilal.zaghloul@genesys.com'];
+                const allowedEmails = ['rod.wilson@hsbc.com'];
 
                 // Initialize the Genesys Cloud SDK
                 const platformClient = require('platformClient');
                 const client = platformClient.ApiClient.instance;
+                const conversationsApi = new platformClient.ConversationsApi(); // <-- Define conversationsApi globally
 
                 const environment = 'euw2.pure.cloud';
                 const conversationId = urlParams.get('conversationId');
@@ -87,7 +88,6 @@
                 // Function to monitor and disconnect the conversation if needed
                 async function monitorConversation(conversationId, timeoutMinutes, wrapupId) {
                     try {
-                        const conversationsApi = new platformClient.ConversationsApi();
                         const conversation = await conversationsApi.getConversation(conversationId);
 
                         const startDate = new Date(conversation.startTime);
@@ -134,7 +134,7 @@
                     const polling = setInterval(async () => {
                         try {
                             // Fetch the updated conversation state
-                            const conversation = await conversationsApi.getConversation(conversationId);
+                            const conversation = await conversationsApi.getConversation(conversationId); // <-- Now uses defined conversationsApi
                             const agentParticipant = conversation.participants.find((participant) => participant.purpose === 'agent');
                             const agentState = agentParticipant.messages[0].state;
 
@@ -157,8 +157,6 @@
                 // Function to disconnect the agent participant and send wrapup for the communication
                 async function disconnectAndWrapup(conversationId, participantId, wrapupId, communicationId) {
                     try {
-                        const conversationsApi = new platformClient.ConversationsApi();
-
                         // First, disconnect the agent participant
                         await conversationsApi.patchConversationsMessageParticipant(conversationId, participantId, {
                             body: {
