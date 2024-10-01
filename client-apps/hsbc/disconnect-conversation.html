@@ -21,7 +21,7 @@
                 const allowedEmails = ['bilal.zaghloul@genesys.com', 'rod.wilson@hsbc.com'];
 
                 // Check if email is authorized
-                if (!allowedEmails.includes(email)) {
+                if (!email || !allowedEmails.includes(email)) {
                     console.error('Unauthorized email. Action not allowed.');
                     document.getElementById('widget').innerHTML = '<h2>Unauthorized Access</h2><p>You do not have permission to access this page.</p>';
                     return; // Exit the script
