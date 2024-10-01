@@ -15,12 +15,21 @@
 
         <script>
             window.onload = function () {
+                // Get URL Parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const email = urlParams.get('email');
+
+                // Check if email is either "bilal.zaghloul@genesys.com" or "rod.wilson@hsbc.com"
+                if (email !== 'bilal.zaghloul@genesys.com' && email !== 'rod.wilson@hsbc.com') {
+                    console.error('Unauthorized email. Action not allowed.');
+                    document.getElementById('widget').innerHTML = '<h2>Unauthorized Access</h2><p>You do not have permission to access this page.</p>';
+                    return; // Exit the script
+                }
+
                 // Initialize the Genesys Cloud SDK
                 const platformClient = require('platformClient');
                 const client = platformClient.ApiClient.instance;
 
-                // Get URL Parameters
-                const urlParams = new URLSearchParams(window.location.search);
                 const environment = 'euw2.pure.cloud';
                 const conversationId = urlParams.get('conversationId');
                 const wrapupId = urlParams.get('wrapup');
@@ -28,17 +37,10 @@
                 const CLIENT_ID = urlParams.get('clientId'); // Use provided clientId or fallback to default
                 const REDIRECT_URI = urlParams.get('redirectUrl'); // Use provided redirectUrl or fallback to default
 
-                const email = urlParams.get('email');
-                console.log(`disconnect-conversation::app::passed email is ${email}`);
-
-                if (email != 'bilal.zaghloul@genesys.com' && email != 'rod.wilson@hsbc.com') {
-                    return;
-                }
-
                 // Set Genesys Cloud environment
                 client.setEnvironment(environment);
 
-                const state = `${environment}|${conversationId}|${timeoutMinutes}|${wrapupId}|${email}`; // Store environment, conversationId, and timeout
+                const state = `${environment}|${conversationId}|${timeoutMinutes}|${wrapupId}`; // Store environment, conversationId, and timeout
 
                 // Upgrade to HTTPS if necessary
                 if (location.protocol !== 'https:') {
@@ -64,14 +66,13 @@
                     const savedConversationId = returnState[1];
                     const savedTimeoutMinutes = parseInt(returnState[2], 10);
                     const savedWrapupId = returnState[3];
-                    const savedEmail = returnState[4];
 
                     // Push state back into the URL in case the user reloads the page
                     if (!environment || !conversationId) {
                         history.pushState(
                             {},
                             'Conversation Monitor',
-                            `?environment=${savedEnvironment}&conversationId=${savedConversationId}&timeout=${savedTimeoutMinutes}&wrapup=${savedWrapupId}&clientId=${CLIENT_ID}&redirectUrl=${REDIRECT_URI}&email=${savedEmail}`
+                            `?environment=${savedEnvironment}&conversationId=${savedConversationId}&timeout=${savedTimeoutMinutes}&wrapup=${savedWrapupId}&clientId=${CLIENT_ID}&redirectUrl=${REDIRECT_URI}`
                         );
                     }
 
