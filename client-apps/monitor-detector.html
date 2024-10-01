@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Genesys Call Monitoring Notification</title>
+        <!-- Include Genesys Cloud SDK from the official CDN -->
+        <script src="https://sdk-cdn.mypurecloud.com/javascript/latest/purecloud-platform-client-v2.min.js"></script>
+    </head>
+    <body>
+        <div id="widget">
+            <h2>Call Monitoring Notification</h2>
+            <p>Listening for monitoring activity...</p>
+        </div>
+
+        <script>
+            window.onload = function () {
+                // Initialize the Genesys Cloud SDK
+                const platformClient = require('platformClient');
+                const client = platformClient.ApiClient.instance;
+                const notificationsApi = new platformClient.NotificationsApi();
+
+                // Get URL Parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const environment = 'mypurecloud.de';
+                const conversationId = urlParams.get('conversationId');
+                client.setEnvironment(environment);
+
+                const CLIENT_ID = '9049644e-ef61-4c1a-8260-7d3d28548a3f'; // Replace with your Genesys Cloud Client ID
+                const REDIRECT_URI = 'https://dev.localhost.com:5000/client-apps/monitor-detector.html'; // Redirect URI
+                const state = `${environment}|${conversationId}`; // Store environment and conversationId as state
+
+                // Authenticate using Implicit Grant and pass the state
+                client
+                    .loginImplicitGrant(CLIENT_ID, REDIRECT_URI, { state })
+                    .then((data) => {
+                        // After authentication, handle the state and start monitoring
+                        const returnState = data.state.split('|');
+                        const savedEnvironment = returnState[0];
+                        const savedConversationId = returnState[1];
+
+                        if (!conversationId) {
+                            history.pushState({}, 'Call Monitoring', `?environment=${savedEnvironment}&conversationId=${savedConversationId}`);
+                        }
+
+                        console.log('Authenticated with conversationId:', savedConversationId);
+                        subscribeToNotifications(savedConversationId);
+                    })
+                    .catch((err) => {
+                        console.error('Authentication failed:', err);
+                    });
+
+                // Function to subscribe to user conversation notifications
+                async function subscribeToNotifications(conversationId) {
+                    try {
+                        const channel = await notificationsApi.postNotificationsChannels();
+                        const connectUri = channel.connectUri;
+
+                        // Subscribe to the specific user's conversation events
+                        const topic = `v2.detail.events.conversation.${conversationId}.attributes`;
+                        await notificationsApi.postNotificationsChannelSubscriptions(channel.id, [{ id: topic }]);
+
+                        console.log('Subscribed to notifications for user conversation events.');
+                        listenForMonitoringEvents(connectUri); // Pass the correct WebSocket URI
+                    } catch (err) {
+                        console.error('Error subscribing to notifications:', err);
+                    }
+                }
+
+                // Function to listen for conversation monitoring events
+                function listenForMonitoringEvents(connectUri) {
+                    const socket = new WebSocket(connectUri);
+
+                    socket.onmessage = (message) => {
+                        const data = JSON.parse(message.data);
+                        if (data.topicName && data.eventBody) {
+                            handleMonitoringEvent(data.eventBody);
+                        }
+                    };
+
+                    socket.onerror = (err) => {
+                        console.error('WebSocket error:', err);
+                    };
+
+                    socket.onclose = () => {
+                        console.log('WebSocket connection closed.');
+                    };
+                }
+
+                // Function to handle the monitoring start/stop events
+                function handleMonitoringEvent(eventBody) {
+                    const participants = eventBody.participants || [];
+
+                    participants.forEach((participant) => {
+                        if (participant.monitoring && participant.monitoring.monitoringType) {
+                            console.log(`monitoringType is ${participant.monitoring.monitoringType}`);
+
+                            if (participant.monitoring.monitoringType === 'coaching') {
+                                notifyAgent('Monitoring started: Coaching');
+                            } else if (participant.monitoring.monitoringType === 'supervisor') {
+                                notifyAgent('Monitoring started: Supervisor');
+                            }
+                        } else if (participant.monitoring && participant.monitoring.endTime) {
+                            notifyAgent('Monitoring ended');
+                        }
+                    });
+                }
+
+                // Function to notify the agent about monitoring status
+                function notifyAgent(message) {
+                    const notificationOptions = {
+                        body: message,
+                        icon: 'https://example.com/notification-icon.png', // Add your icon URL here
+                    };
+
+                    if (Notification.permission === 'granted') {
+                        new Notification('Call Monitoring Update', notificationOptions);
+                    } else if (Notification.permission !== 'denied') {
+                        Notification.requestPermission().then((permission) => {
+                            if (permission === 'granted') {
+                                new Notification('Call Monitoring Update', notificationOptions);
+                            }
+                        });
+                    }
+                }
+            };
+        </script>
+    </body>
+</html>
