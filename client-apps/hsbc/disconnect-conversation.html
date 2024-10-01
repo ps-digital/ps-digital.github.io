@@ -17,7 +17,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const email = urlParams.get('email');
 
-            if (email == 'bilal.zaghloul@genesys.com' || email == 'rod.wilson@hsbc.com') {
+            if (email != 'bilal.zaghloul@genesys.com' && email != 'rod.wilson@hsbc.com') {
                 return;
             }
 
