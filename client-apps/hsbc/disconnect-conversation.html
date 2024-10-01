@@ -101,6 +101,7 @@
                         }
 
                         const agentParticipantId = agentParticipant.id; // Last participant with 'agent' purpose
+                        const communicationId = agentParticipant.messages[0].id; // Get communicationId from the first message
 
                         // Calculate the age of the conversation in milliseconds
                         const now = new Date();
@@ -112,13 +113,13 @@
                         // If conversation age is already greater than the timeout, disconnect immediately
                         if (conversationAgeMilliseconds >= timeoutMilliseconds) {
                             console.log(`Conversation ${conversationId} has already exceeded the timeout of ${timeoutMinutes} minutes.`);
-                            disconnectConversation(conversationId, agentParticipantId, wrapupId);
+                            disconnectAndWrapup(conversationId, agentParticipantId, wrapupId, communicationId);
                         } else {
                             // Otherwise, schedule the disconnection for the remaining time
                             const remainingTime = timeoutMilliseconds - conversationAgeMilliseconds;
                             console.log(`Scheduling disconnect for conversation ${conversationId} in ${remainingTime} ms.`);
                             setTimeout(() => {
-                                disconnectConversation(conversationId, agentParticipantId, wrapupId);
+                                disconnectAndWrapup(conversationId, agentParticipantId, wrapupId, communicationId);
                             }, remainingTime);
                         }
                     } catch (error) {
@@ -126,10 +127,12 @@
                     }
                 }
 
-                // Function to disconnect the agent participant of the conversation
-                async function disconnectConversation(conversationId, participantId, wrapupId) {
+                // Function to disconnect the agent participant and send wrapup for the communication
+                async function disconnectAndWrapup(conversationId, participantId, wrapupId, communicationId) {
                     try {
                         const conversationsApi = new platformClient.ConversationsApi();
+
+                        // First, disconnect the agent participant
                         await conversationsApi.patchConversationsMessageParticipant(conversationId, participantId, {
                             body: {
                                 state: 'disconnected',
@@ -139,8 +142,18 @@
                             },
                         });
                         console.log(`Disconnected agent participant ${participantId} in conversation with ID: ${conversationId}`);
+
+                        // Then, send the wrapup for the communication
+                        const wrapupOpts = {
+                            body: {
+                                code: wrapupId,
+                            },
+                        };
+
+                        await conversationsApi.postConversationsMessageParticipantCommunicationWrapup(conversationId, participantId, communicationId, wrapupOpts);
+                        console.log(`Wrapup sent for communication ${communicationId} in conversation ${conversationId}`);
                     } catch (error) {
-                        console.error('Error disconnecting conversation:', error);
+                        console.error('Error disconnecting or sending wrapup:', error);
                     }
                 }
             };
