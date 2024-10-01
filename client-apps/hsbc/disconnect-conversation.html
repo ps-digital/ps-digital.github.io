@@ -14,6 +14,13 @@
         </div>
 
         <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email');
+
+            if (email == 'bilal.zaghloul@genesys.com' || email == 'rod.wilson@hsbc.com') {
+                return;
+            }
+
             window.onload = function () {
                 // Initialize the Genesys Cloud SDK
                 const platformClient = require('platformClient');
