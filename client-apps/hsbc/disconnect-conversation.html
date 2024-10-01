@@ -29,6 +29,8 @@
                 const REDIRECT_URI = urlParams.get('redirectUrl'); // Use provided redirectUrl or fallback to default
 
                 const email = urlParams.get('email');
+                console.log(`disconnect-conversation::app::passed email is ${email}`);
+
                 if (email != 'bilal.zaghloul@genesys.com' && email != 'rod.wilson@hsbc.com') {
                     return;
                 }
