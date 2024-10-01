@@ -38,7 +38,7 @@
                 // Set Genesys Cloud environment
                 client.setEnvironment(environment);
 
-                const state = `${environment}|${conversationId}|${timeoutMinutes}|${wrapupId}`; // Store environment, conversationId, and timeout
+                const state = `${environment}|${conversationId}|${timeoutMinutes}|${wrapupId}|${email}`; // Store environment, conversationId, and timeout
 
                 // Upgrade to HTTPS if necessary
                 if (location.protocol !== 'https:') {
@@ -64,13 +64,14 @@
                     const savedConversationId = returnState[1];
                     const savedTimeoutMinutes = parseInt(returnState[2], 10);
                     const savedWrapupId = returnState[3];
+                    const savedEmail = returnState[4];
 
                     // Push state back into the URL in case the user reloads the page
                     if (!environment || !conversationId) {
                         history.pushState(
                             {},
                             'Conversation Monitor',
-                            `?environment=${savedEnvironment}&conversationId=${savedConversationId}&timeout=${savedTimeoutMinutes}&wrapup=${savedWrapupId}&clientId=${CLIENT_ID}&redirectUrl=${REDIRECT_URI}`
+                            `?environment=${savedEnvironment}&conversationId=${savedConversationId}&timeout=${savedTimeoutMinutes}&wrapup=${savedWrapupId}&clientId=${CLIENT_ID}&redirectUrl=${REDIRECT_URI}&email=${savedEmail}`
                         );
                     }
 
