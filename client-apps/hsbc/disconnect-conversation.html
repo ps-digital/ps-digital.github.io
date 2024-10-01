@@ -17,17 +17,9 @@
             window.onload = function () {
                 // Get URL Parameters
                 const urlParams = new URLSearchParams(window.location.search);
-                console.log(`disconnect-app::urlparams::${urlParams}`);
 
                 const email = urlParams.get('email');
                 const allowedEmails = ['bilal.zaghloul@genesys.com', 'rod.wilson@hsbc.com'];
-
-                // Check if email is authorized
-                if (!email || !allowedEmails.includes(email)) {
-                    console.error('Unauthorized email. Action not allowed.');
-                    document.getElementById('widget').innerHTML = '<h2>Unauthorized Access</h2><p>You do not have permission to access this page.</p>';
-                    return; // Exit the script
-                }
 
                 // Initialize the Genesys Cloud SDK
                 const platformClient = require('platformClient');
