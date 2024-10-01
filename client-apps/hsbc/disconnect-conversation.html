@@ -17,6 +17,8 @@
             window.onload = function () {
                 // Get URL Parameters
                 const urlParams = new URLSearchParams(window.location.search);
+                console.log(`disconnect-app::urlparams::${urlParams}`);
+
                 const email = urlParams.get('email');
                 const allowedEmails = ['bilal.zaghloul@genesys.com', 'rod.wilson@hsbc.com'];
 
