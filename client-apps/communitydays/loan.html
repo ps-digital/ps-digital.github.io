@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Loan Application Demo</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" />
+        <style>
+            body {
+                font-family: 'Roboto', sans-serif;
+                background-color: #f0f0f0;
+                margin: 0;
+            }
+            .loan-app-container {
+                background-color: #ffffff;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                width: 400px;
+            }
+            .loan-app-container h2 {
+                text-align: center;
+                color: #333;
+            }
+            .form-group {
+                margin-bottom: 15px;
+            }
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+            .form-group input {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+            .button-container {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 20px;
+            }
+            .button-container button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+            .button-submit {
+                background-color: #28a745;
+                color: white;
+            }
+            .button-reset {
+                background-color: transparent;
+                color: #007bff;
+                border: 2px solid #007bff;
+                padding: 10px 20px;
+                transition: background-color 0.3s, color 0.3s;
+            }
+            .notification {
+                margin-top: 15px;
+                padding: 10px;
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+                border-radius: 4px;
+                display: none;
+                text-align: center;
+            }
+            .banner {
+                background-color: #333;
+                padding: 15px;
+                display: flex;
+                align-items: center;
+            }
+            .banner img {
+                height: 70px;
+            }
+            .loan-app-container {
+                background-color: #ffffff;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                width: 400px;
+                margin: 20px auto;
+            }
+            .button-submit {
+                background-color: #007bff;
+                color: white;
+                border: none;
+            }
+            .button-reset {
+                background-color: transparent;
+                color: #007bff;
+                border: 2px solid #007bff;
+            }
+            .button-submit:hover {
+                background-color: #0056b3;
+            }
+            .button-reset:hover {
+                background-color: #007bff;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="banner">
+            <img
+                src="https://cdn.prod.website-files.com/6640cd28f51f13175e577c05/664e008df69af77c370612de_d1a3287e-1e5d-57b6-a3db-e2ae8df45c9c.svg"
+                alt="Genesys Logo"
+                style="height: 50px; margin-left: 10px; object-fit: contain"
+            />
+        </div>
+        <div class="loan-app-container">
+            <h2>Loan Application Form</h2>
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" placeholder="Enter your full name" value="Bilal Zaghloul" />
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter your email" value="bilal@demo.com" />
+            </div>
+            <div class="form-group">
+                <label for="loanAmount">Loan Amount</label>
+                <input type="number" id="loanAmount" placeholder="Enter loan amount" />
+            </div>
+            <div class="form-group">
+                <label for="loanTerm">Loan Term (in years)</label>
+                <select id="loanTerm">
+                    <option value="1">1 Year</option>
+                    <option value="2">2 Years</option>
+                    <option value="3">3 Years</option>
+                    <option value="5">5 Years</option>
+                    <option value="10">10 Years</option>
+                </select>
+            </div>
+            <div class="button-container">
+                <button class="button-submit" onclick="submitApplication()">Submit</button>
+                <button class="button-reset" onclick="resetForm()">Reset</button>
+            </div>
+            <div id="notification" class="notification"></div>
+        </div>
+        <script>
+            function submitApplication() {
+                const notification = document.getElementById('notification');
+                notification.innerText = 'Your loan application has been submitted successfully!';
+                notification.style.display = 'block';
+            }
+
+            function resetForm() {
+                document.getElementById('fullName').value = '';
+                document.getElementById('email').value = '';
+                document.getElementById('loanAmount').value = '';
+                document.getElementById('loanTerm').value = '1';
+                const notification = document.getElementById('notification');
+                notification.innerText = 'Form has been reset.';
+                notification.style.display = 'block';
+            }
+        </script>
+    </body>
+</html>
