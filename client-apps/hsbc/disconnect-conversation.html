@@ -18,13 +18,13 @@
                 // Get URL Parameters
                 const urlParams = new URLSearchParams(window.location.search);
 
-                const email = urlParams.get('email');
                 const allowedEmails = ['rod.agent@hsbc.com', 'bilal.zaghloul@genesys.com'];
 
                 // Initialize the Genesys Cloud SDK
                 const platformClient = require('platformClient');
                 const client = platformClient.ApiClient.instance;
                 const conversationsApi = new platformClient.ConversationsApi(); // <-- Define conversationsApi globally
+                const usersApi = new platformClient.UsersApi();
 
                 const environment = 'euw2.pure.cloud';
                 const conversationId = urlParams.get('conversationId');
@@ -36,71 +36,50 @@
                 // Set Genesys Cloud environment
                 client.setEnvironment(environment);
 
-                // Add email to state
-                const state = `${environment}|${conversationId}|${timeoutMinutes}|${wrapupId}|${email}`; // Store environment, conversationId, timeout, wrapupId, and email
-
                 // Upgrade to HTTPS if necessary
                 if (location.protocol !== 'https:') {
                     location.replace(`https:${location.href.substring(location.protocol.length)}`);
                 }
 
-                // Authenticate using Implicit Grant and pass the state
+                // Authenticate using Implicit Grant
                 client.setPersistSettings(true, 'conversationMonitorApp');
                 client
-                    .loginImplicitGrant(CLIENT_ID, REDIRECT_URI, { state })
+                    .loginImplicitGrant(CLIENT_ID, REDIRECT_URI)
                     .then((data) => {
-                        // After authentication, handle state
-                        bootstrap(data.state);
+                        // After authentication, get the current logged-in user
+                        return usersApi.getUsersMe();
+                    })
+                    .then((me) => {
+                        // Verify if the current user's email is allowed
+                        if (!allowedEmails.includes(me.email)) {
+                            console.error('Unauthorized email. Action not allowed.');
+                            document.getElementById('widget').innerHTML = '<h2>Unauthorized Access</h2><p>You do not have permission to access this page.</p>';
+                            return;
+                        }
+
+                        // Proceed to monitor the conversation with the specified timeout
+                        monitorConversation(conversationId, timeoutMinutes, wrapupId, me.id);
                     })
                     .catch((err) => {
-                        console.error('Authentication failed:', err);
+                        console.error('Authentication or user fetch failed:', err);
                     });
 
-                // Bootstrap function to handle post-authentication logic
-                function bootstrap(data) {
-                    const returnState = data.split('|');
-                    const savedEnvironment = returnState[0];
-                    const savedConversationId = returnState[1];
-                    const savedTimeoutMinutes = parseInt(returnState[2], 10);
-                    const savedWrapupId = returnState[3];
-                    const savedEmail = returnState[4]; // Email is now part of the state
-
-                    // Re-check email post-authentication
-                    if (!allowedEmails.includes(savedEmail)) {
-                        console.error('Unauthorized email after authentication. Action not allowed.');
-                        document.getElementById('widget').innerHTML = '<h2>Unauthorized Access</h2><p>You do not have permission to access this page.</p>';
-                        return;
-                    }
-
-                    // Push state back into the URL in case the user reloads the page
-                    if (!environment || !conversationId) {
-                        history.pushState(
-                            {},
-                            'Conversation Monitor',
-                            `?environment=${savedEnvironment}&conversationId=${savedConversationId}&timeout=${savedTimeoutMinutes}&wrapup=${savedWrapupId}&clientId=${CLIENT_ID}&redirectUrl=${REDIRECT_URI}&email=${savedEmail}`
-                        );
-                    }
-
-                    // Proceed to monitor the conversation with the specified timeout
-                    monitorConversation(savedConversationId, savedTimeoutMinutes, savedWrapupId);
-                }
-
                 // Function to monitor and disconnect the conversation if needed
-                async function monitorConversation(conversationId, timeoutMinutes, wrapupId) {
+                async function monitorConversation(conversationId, timeoutMinutes, wrapupId, currentUserId) {
                     try {
                         const conversation = await conversationsApi.getConversation(conversationId);
 
                         const startDate = new Date(conversation.startTime);
 
-                        // Find the last participant with purpose 'agent'
-                        const agentParticipant = conversation.participants.reverse().find((participant) => participant.purpose === 'agent');
+                        // Find the participant with purpose 'agent' that matches the current user
+                        const agentParticipant = conversation.participants.find((participant) => participant.purpose === 'agent' && participant.userId === currentUserId);
 
                         if (!agentParticipant) {
-                            console.error('No agent participant found in the conversation');
+                            console.error('No matching agent participant found in the conversation');
                             return;
                         }
 
-                        const agentParticipantId = agentParticipant.id; // Last participant with 'agent' purpose
+                        const agentParticipantId = agentParticipant.id; // Participant with 'agent' purpose and matching userId
                         const communicationId = agentParticipant.messages[0].id; // Get communicationId from the first message
 
                         // Calculate the age of the conversation in milliseconds
@@ -135,8 +114,10 @@
                         try {
                             // Fetch the updated conversation state
                             const conversation = await conversationsApi.getConversation(conversationId); // <-- Now uses defined conversationsApi
-                            const agentParticipant = conversation.participants.find((participant) => participant.purpose === 'agent');
+                            const agentParticipant = conversation.participants.find((participant) => participant.id === agentParticipantId);
                             const agentState = agentParticipant.messages[0].state;
+
+                            console.log(agentParticipant);
 
                             console.log(`Agent state: ${agentState}`);
 
