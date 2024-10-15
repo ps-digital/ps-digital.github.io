@@ -41,19 +41,39 @@
                     location.replace(`https:${location.href.substring(location.protocol.length)}`);
                 }
 
-                // Authenticate using Implicit Grant
+                // Prepare state object to persist parameters across redirects
+                const state = JSON.stringify({
+                    conversationId: conversationId,
+                    wrapupId: wrapupId,
+                    timeoutMinutes: timeoutMinutes,
+                });
+
+                // Authenticate using Implicit Grant with state
                 client.setPersistSettings(true, 'conversationMonitorApp');
                 client
-                    .loginImplicitGrant(CLIENT_ID, REDIRECT_URI)
+                    .loginImplicitGrant(CLIENT_ID, REDIRECT_URI, { state })
                     .then((data) => {
                         // After authentication, get the current logged-in user
-                        return usersApi.getUsersMe();
+                        return usersApi.getUsersMe().then((me) => ({ me, state: data.state }));
                     })
-                    .then((me) => {
+                    .then(({ me, state }) => {
                         // Verify if the current user's email is allowed
                         if (!allowedEmails.includes(me.email)) {
                             console.error('Unauthorized email. Action not allowed.');
                             document.getElementById('widget').innerHTML = '<h2>Unauthorized Access</h2><p>You do not have permission to access this page.</p>';
+                            return;
+                        }
+
+                        // Parse state to retrieve conversation parameters
+                        const parsedState = JSON.parse(state);
+                        const conversationId = parsedState.conversationId;
+                        const wrapupId = parsedState.wrapupId;
+                        const timeoutMinutes = parsedState.timeoutMinutes;
+
+                        // Ensure conversationId is present
+                        if (!conversationId) {
+                            console.error('Missing conversationId in state. Cannot proceed.');
+                            document.getElementById('widget').innerHTML = '<h2>Error</h2><p>Missing conversationId. Please provide a valid conversationId in the URL.</p>';
                             return;
                         }
 
@@ -80,7 +100,12 @@
                         }
 
                         const agentParticipantId = agentParticipant.id; // Participant with 'agent' purpose and matching userId
-                        const communicationId = agentParticipant.messages[0].id; // Get communicationId from the first message
+                        const communicationId = agentParticipant.messages[0]?.id; // Get communicationId from the first message, if available
+
+                        if (!communicationId) {
+                            console.error('No messages found for the agent participant. Cannot proceed with disconnection.');
+                            return;
+                        }
 
                         // Calculate the age of the conversation in milliseconds
                         const now = new Date();
@@ -115,9 +140,19 @@
                             // Fetch the updated conversation state
                             const conversation = await conversationsApi.getConversation(conversationId); // <-- Now uses defined conversationsApi
                             const agentParticipant = conversation.participants.find((participant) => participant.id === agentParticipantId);
-                            const agentState = agentParticipant.messages[0].state;
 
-                            console.log(agentParticipant);
+                            if (!agentParticipant) {
+                                console.error('Agent participant not found in the conversation during polling. Stopping polling.');
+                                clearInterval(polling);
+                                return;
+                            }
+
+                            const agentState = agentParticipant.messages[0]?.state;
+
+                            if (!agentState) {
+                                console.error('Agent state not found. Continuing polling.');
+                                return;
+                            }
 
                             console.log(`Agent state: ${agentState}`);
 
