@@ -47,6 +47,75 @@
                 border-width: 0.2em;
                 margin-left: 10px;
             }
+            <style>
+            .hsbc-banner {
+                display: flex;
+                align-items: center;
+                margin-bottom: 20px;
+                background-color: #fff;
+                padding: 10px 20px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .hsbc-banner img {
+                height: 50px;
+            }
+            .btn-add-record {
+                background-color: red;
+                border-color: red;
+                color: white;
+            }
+            .btn-delete,
+            .btn-edit {
+                background-color: black;
+                border-color: black;
+                color: white;
+                margin-right: 10px;
+            }
+            .btn-save-record {
+                background-color: red;
+                border-color: red;
+                color: white;
+            }
+            .search-bar {
+                margin-bottom: 20px;
+            }
+            .refresh-icon {
+                cursor: pointer;
+                margin-left: 10px;
+                vertical-align: middle;
+            }
+            .spinner-border {
+                display: none;
+                width: 1.5rem;
+                height: 1.5rem;
+                border-width: 0.2em;
+                margin-left: 10px;
+            }
+            .btn-delete:disabled,
+            .btn-edit:disabled {
+                background-color: #e0e0e0 !important;
+                border-color: #cccccc !important;
+                color: #999999 !important;
+                cursor: not-allowed !important;
+                opacity: 0.7;
+                position: relative;
+                padding-right: 30px !important; /* Add space for the lock icon */
+            }
+
+            .btn-delete:disabled::after,
+            .btn-edit:disabled::after {
+                content: '🔒';
+                position: absolute;
+                right: 8px; /* Adjust position to be inside the button */
+                top: 50%;
+                transform: translateY(-50%);
+            }
+
+            /* Since we have two buttons side by side, let's ensure proper spacing */
+            .btn-edit {
+                margin-right: 10px; /* Existing style, just making sure it's there */
+            }
+        </style>
         </style>
     </head>
     <body>
@@ -68,7 +137,8 @@
                         <th>Country</th>
                         <th>Segment</th>
                         <th>Language</th>
-                        <th>Tech Intent</th>
+                        <th>Mobile Intent</th>
+                        <th>Desktop Intent</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -109,8 +179,12 @@
                                 <select class="form-control" id="language" required></select>
                             </div>
                             <div class="form-group">
-                                <label for="techIntent">Tech Intent</label>
-                                <select class="form-control" id="techIntent" required></select>
+                                <label for="mobileIntent">Mobile Intent</label>
+                                <select class="form-control" id="mobileIntent" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="desktopIntent">Desktop Intent</label>
+                                <select class="form-control" id="desktopIntent" required></select>
                             </div>
                         </form>
                     </div>
@@ -213,11 +287,17 @@
                     }
                 });
 
-                const techIntentsData = await fetchDataTableRows(TECH_INTENTS_DT, GET_DT_ACTIONID);
-                const techIntentDropdown = document.getElementById('techIntent');
-                techIntentsData.forEach((row) => {
+                const intentsData = await fetchDataTableRows(TECH_INTENTS_DT, GET_DT_ACTIONID);
+                const mobileIntentDropdown = document.getElementById('mobileIntent');
+                const desktopIntentDropdown = document.getElementById('desktopIntent');
+
+                mobileIntentDropdown.appendChild(createOptionElement(''));
+                desktopIntentDropdown.appendChild(createOptionElement(''));
+
+                intentsData.forEach((row) => {
                     if (!row.key.toLowerCase().startsWith('default')) {
-                        techIntentDropdown.appendChild(createOptionElement(row.key));
+                        mobileIntentDropdown.appendChild(createOptionElement(row.key));
+                        desktopIntentDropdown.appendChild(createOptionElement(row.key));
                     }
                 });
             }
@@ -227,7 +307,8 @@
                     const payload = {
                         datatableId: dataTableId,
                         key: newRow.key,
-                        techIntent: newRow.TECH_Intent,
+                        Mobile_Intent: newRow.Mobile_Intent,
+                        Desktop_Intent: newRow.Desktop_Intent,
                     };
 
                     const response = await apiInstance.postIntegrationsActionExecute(actionId, payload);
@@ -265,9 +346,12 @@
                 const tbody = document.querySelector('#dataTable tbody');
                 tbody.innerHTML = '';
 
+                console.log(data);
+
                 data.forEach((row, index) => {
                     const rowData = row.key.split('_');
-                    const techIntent = row.TECH_Intent;
+                    const mobileIntent = row.Mobile_Intent;
+                    const desktopIntent = row.Desktop_Intent;
                     const tableRow = document.createElement('tr');
 
                     rowData.forEach((cellData) => {
@@ -276,9 +360,13 @@
                         tableRow.appendChild(cell);
                     });
 
-                    const techIntentCell = document.createElement('td');
-                    techIntentCell.textContent = techIntent;
-                    tableRow.appendChild(techIntentCell);
+                    const mobileIntentCell = document.createElement('td');
+                    mobileIntentCell.textContent = mobileIntent;
+                    tableRow.appendChild(mobileIntentCell);
+
+                    const desktopIntentCell = document.createElement('td');
+                    desktopIntentCell.textContent = desktopIntent;
+                    tableRow.appendChild(desktopIntentCell);
 
                     const actionsCell = document.createElement('td');
                     const deleteButton = document.createElement('button');
@@ -317,16 +405,18 @@
                 const country = document.getElementById('country').value.toLowerCase();
                 const segment = document.getElementById('segment').value.toLowerCase();
                 const language = document.getElementById('language').value.toLowerCase();
-                const techIntent = document.getElementById('techIntent').value.toLowerCase();
+                const mobileIntent = document.getElementById('mobileIntent').value.toLowerCase();
+                const desktopIntent = document.getElementById('desktopIntent').value.toLowerCase();
 
-                if (!key || !lob || !country || !segment || !language || !techIntent) {
-                    alert('Please fill in all fields.');
+                if (!key || !lob || !country || !segment || !language || (!mobileIntent && !desktopIntent)) {
+                    alert('Please fill in all fields, and either Mobile Intent or Desktop Intent must be filled.');
                     return;
                 }
 
                 const newRow = {
                     key: [key, lob, country, segment, language].join('_'),
-                    TECH_Intent: techIntent,
+                    Mobile_Intent: mobileIntent,
+                    Desktop_Intent: desktopIntent,
                 };
 
                 if (editIndex === -1) {
@@ -337,7 +427,6 @@
                 } else {
                     const oldKey = data[editIndex].key;
                     const deleteSuccess = await deleteDataTableRow(MIX_INTENTS_DT, DELETE_DT_RECORD_ACTION, oldKey);
-                    console.log(deleteSuccess);
                     if (deleteSuccess) {
                         const success = await addDataTableRow(MIX_INTENTS_DT, ADD_DT_MIX_RECORD_ACTION, newRow);
                         if (success) {
@@ -362,7 +451,8 @@
                 populateSelectElement('country', keyParts[2]);
                 populateSelectElement('segment', keyParts[3]);
                 populateSelectElement('language', keyParts[4]);
-                populateSelectElement('techIntent', record.TECH_Intent);
+                populateSelectElement('mobileIntent', record.Mobile_Intent);
+                populateSelectElement('desktopIntent', record.Desktop_Intent);
 
                 editIndex = index;
                 $('#addRecordModal').modal('show');
@@ -370,6 +460,7 @@
 
             function populateSelectElement(elementId, value) {
                 const selectElement = document.getElementById(elementId);
+
                 for (let i = 0; i < selectElement.options.length; i++) {
                     if (selectElement.options[i].value.toLowerCase() === value.toLowerCase()) {
                         selectElement.selectedIndex = i;
@@ -391,7 +482,12 @@
             }
 
             function filterTable(query) {
-                const filteredData = data.filter((row) => row.key.toLowerCase().includes(query.toLowerCase()) || row.TECH_Intent.toLowerCase().includes(query.toLowerCase()));
+                const filteredData = data.filter(
+                    (row) =>
+                        row.key.toLowerCase().includes(query.toLowerCase()) ||
+                        row.Mobile_Intent.toLowerCase().includes(query.toLowerCase()) ||
+                        row.Desktop_Intent.toLowerCase().includes(query.toLowerCase())
+                );
                 displayTable(filteredData);
             }
 
