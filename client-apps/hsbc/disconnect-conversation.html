@@ -14,195 +14,108 @@
         </div>
 
         <script>
-            // Prevent multiple script initializations
-            if (window.conversationMonitorInitialized) {
-                console.log('Script already initialized. Exiting.');
-            } else {
-                window.conversationMonitorInitialized = true;
-
-                window.onload = function () {
-                    console.log('Script loaded at:', new Date());
-
-                    // Get URL Parameters
-                    const urlParams = new URLSearchParams(window.location.search);
-
-                    // Initialize the Genesys Cloud SDK
-                    const platformClient = require('platformClient');
-                    const client = platformClient.ApiClient.instance;
-                    const conversationsApi = new platformClient.ConversationsApi();
-                    const usersApi = new platformClient.UsersApi();
-
-                    const environment = 'euw2.pure.cloud';
-                    const conversationId = urlParams.get('conversationId');
-                    const wrapupId = urlParams.get('wrapup');
-                    const timeoutMinutes = urlParams.get('timeout') ? parseInt(urlParams.get('timeout'), 10) : 30; // Default to 30 minutes if not provided
-                    const CLIENT_ID = urlParams.get('clientId'); // Use provided clientId or fallback to default
-                    const REDIRECT_URI = urlParams.get('redirectUrl'); // Use provided redirectUrl or fallback to default
-
-                    // Set Genesys Cloud environment
-                    client.setEnvironment(environment);
-
-                    // Upgrade to HTTPS if necessary
-                    if (location.protocol !== 'https:') {
-                        location.replace(`https:${location.href.substring(location.protocol.length)}`);
-                    }
-
-                    // Prepare state object to persist parameters across redirects
-                    const state = JSON.stringify({
-                        conversationId: conversationId,
-                        wrapupId: wrapupId,
-                        timeoutMinutes: timeoutMinutes,
-                    });
-
-                    // Authenticate using Implicit Grant with state
-                    client.setPersistSettings(true, 'conversationMonitorApp');
-                    client
-                        .loginImplicitGrant(CLIENT_ID, REDIRECT_URI, { state })
-                        .then((data) => {
-                            // After authentication, get the current logged-in user
-                            return usersApi.getUsersMe().then((me) => ({ me, state: data.state }));
-                        })
-                        .then(({ me, state }) => {
-                            // Parse state to retrieve conversation parameters
-                            const parsedState = JSON.parse(state);
-                            const conversationId = parsedState.conversationId;
-                            const wrapupId = parsedState.wrapupId;
-                            const timeoutMinutes = parsedState.timeoutMinutes;
-
-                            // Ensure conversationId is present
-                            if (!conversationId) {
-                                console.error('Missing conversationId in state. Cannot proceed.');
-                                document.getElementById('widget').innerHTML = '<h2>Error</h2><p>Missing conversationId. Please provide a valid conversationId in the URL.</p>';
-                                return;
-                            }
-
-                            // Proceed to monitor the conversation with the specified timeout
-                            monitorConversation(conversationId, timeoutMinutes, wrapupId, me.id);
-                        })
-                        .catch((err) => {
-                            console.error('Authentication or user fetch failed:', err);
-                        });
-
-                    // Function to monitor and disconnect the conversation if needed
-                    async function monitorConversation(conversationId, timeoutMinutes, wrapupId, currentUserId) {
-                        try {
-                            const conversation = await conversationsApi.getConversation(conversationId);
-
-                            const startDate = new Date(conversation.startTime);
-
-                            // Find the participant with purpose 'agent' that matches the current user
-                            const agentParticipant = conversation.participants.find((participant) => participant.purpose === 'agent' && participant.userId === currentUserId);
-
-                            if (!agentParticipant) {
-                                console.error('No matching agent participant found in the conversation');
-                                return;
-                            }
-
-                            const agentParticipantId = agentParticipant.id; // Participant with 'agent' purpose and matching userId
-                            const communicationId = agentParticipant.messages[0]?.id; // Get communicationId from the first message, if available
-
-                            if (!communicationId) {
-                                console.error('No messages found for the agent participant. Cannot proceed with disconnection.');
-                                return;
-                            }
-
-                            // Calculate the age of the conversation in milliseconds
-                            const now = new Date();
-                            const conversationAgeMilliseconds = now - startDate;
-
-                            // Convert the timeout to milliseconds
-                            const timeoutMilliseconds = timeoutMinutes * 60 * 1000;
-
-                            // If conversation age is already greater than the timeout, check agent state and poll if necessary
-                            if (conversationAgeMilliseconds >= timeoutMilliseconds) {
-                                console.log(`Conversation ${conversationId} has already exceeded the timeout of ${timeoutMinutes} minutes.`);
-                                checkAgentStateAndPoll(conversationId, agentParticipantId, wrapupId, communicationId, timeoutMilliseconds, startDate);
-                            } else {
-                                // Otherwise, schedule the disconnection for the remaining time
-                                const remainingTime = timeoutMilliseconds - conversationAgeMilliseconds;
-                                console.log(`Scheduling disconnect for conversation ${conversationId} in ${remainingTime} ms.`);
-                                setTimeout(() => {
-                                    checkAgentStateAndPoll(conversationId, agentParticipantId, wrapupId, communicationId, timeoutMilliseconds, startDate);
-                                }, remainingTime);
-                            }
-                        } catch (error) {
-                            console.error('Error fetching or monitoring conversation:', error);
-                        }
-                    }
-
-                    // Function to check agent state and poll if necessary
-                    function checkAgentStateAndPoll(conversationId, agentParticipantId, wrapupId, communicationId, timeoutMilliseconds, startDate) {
-                        const pollInterval = 5000; // Poll every 5 seconds
-
-                        const polling = setInterval(async () => {
-                            try {
-                                // Fetch the updated conversation state
-                                const conversation = await conversationsApi.getConversation(conversationId);
-                                const agentParticipant = conversation.participants.find((participant) => participant.id === agentParticipantId);
-
-                                if (!agentParticipant) {
-                                    console.error('Agent participant not found in the conversation during polling. Stopping polling.');
-                                    clearInterval(polling);
-                                    return;
-                                }
-
-                                const agentState = agentParticipant.messages[0]?.state;
-
-                                if (!agentState) {
-                                    console.error('Agent state not found. Continuing polling.');
-                                    return;
-                                }
-
-                                console.log(`Agent state: ${agentState}`);
-
-                                // Re-check the timeout condition
-                                const now = new Date();
-                                const conversationAgeMilliseconds = now - startDate;
-
-                                if (conversationAgeMilliseconds >= timeoutMilliseconds && agentState === 'connected') {
-                                    console.log('Timeout condition met, and agent is connected. Proceeding with disconnection.');
-                                    await disconnectAndWrapup(conversationId, agentParticipantId, wrapupId, communicationId);
-
-                                    // Stop polling after disconnection
-                                    clearInterval(polling);
-                                } else if (conversationAgeMilliseconds < timeoutMilliseconds) {
-                                    console.log(`Timeout not yet reached. Remaining time: ${timeoutMilliseconds - conversationAgeMilliseconds} ms.`);
-                                }
-                            } catch (error) {
-                                console.error('Error polling for agent state:', error);
-                            }
-                        }, pollInterval);
-                    }
-
-                    // Function to disconnect the agent participant and send wrapup for the communication
-                    async function disconnectAndWrapup(conversationId, participantId, wrapupId, communicationId) {
-                        try {
-                            // First, disconnect the agent participant
-                            await conversationsApi.patchConversationsMessageParticipant(conversationId, participantId, {
-                                body: {
-                                    state: 'disconnected',
-                                    wrapup: {
-                                        code: wrapupId,
-                                    },
-                                },
-                            });
-                            console.log(`Disconnected agent participant ${participantId} in conversation with ID: ${conversationId}`);
-
-                            // Then, send the wrapup for the communication
-                            const wrapupOpts = {
-                                body: {
-                                    code: wrapupId,
-                                },
-                            };
-
-                            await conversationsApi.postConversationsMessageParticipantCommunicationWrapup(conversationId, participantId, communicationId, wrapupOpts);
-                            console.log(`Wrapup sent for communication ${communicationId} in conversation ${conversationId}`);
-                        } catch (error) {
-                            console.error('Error disconnecting or sending wrapup:', error);
-                        }
-                    }
-                };
-            }
+            window.conversationMonitorInitialized
+                ? console.log('Script already initialized. Exiting.')
+                : ((window.conversationMonitorInitialized = !0),
+                  (window.onload = function () {
+                      console.log('Script loaded at:', new Date());
+                      let t = new URLSearchParams(window.location.search),
+                          e = require('platformClient'),
+                          n = e.ApiClient.instance,
+                          i = new e.ConversationsApi(),
+                          o = new e.UsersApi(),
+                          r = t.get('conversationId'),
+                          a = t.get('wrapup'),
+                          s = t.get('timeout') ? parseInt(t.get('timeout'), 10) : 30,
+                          c = t.get('clientId'),
+                          d = t.get('redirectUrl');
+                      n.setEnvironment('euw2.pure.cloud'), 'https:' !== location.protocol && location.replace(`https:${location.href.substring(location.protocol.length)}`);
+                      let p = JSON.stringify({ conversationId: r, wrapupId: a, timeoutMinutes: s });
+                      async function g(t, e, n, o) {
+                          try {
+                              let r = await i.getConversation(t),
+                                  a = new Date(r.startTime),
+                                  s = r.participants.find((t) => 'agent' === t.purpose && t.userId === o);
+                              if (!s) {
+                                  console.error('No matching agent participant found in the conversation');
+                                  return;
+                              }
+                              let c = s.id,
+                                  d = s.messages[0]?.id;
+                              if (!d) {
+                                  console.error('No messages found for the agent participant. Cannot proceed with disconnection.');
+                                  return;
+                              }
+                              let p = new Date(),
+                                  g = p - a,
+                                  u = 6e4 * e;
+                              if (g >= u) console.log(`Conversation ${t} has already exceeded the timeout of ${e} minutes.`), l(t, c, n, d, u, a);
+                              else {
+                                  let h = u - g;
+                                  console.log(`Scheduling disconnect for conversation ${t} in ${h} ms.`),
+                                      setTimeout(() => {
+                                          l(t, c, n, d, u, a);
+                                      }, h);
+                              }
+                          } catch (f) {
+                              console.error('Error fetching or monitoring conversation:', f);
+                          }
+                      }
+                      function l(t, e, n, o, r, a) {
+                          let s = setInterval(async () => {
+                              try {
+                                  let c = await i.getConversation(t),
+                                      d = c.participants.find((t) => t.id === e);
+                                  if (!d) {
+                                      console.error('Agent participant not found in the conversation during polling. Stopping polling.'), clearInterval(s);
+                                      return;
+                                  }
+                                  let p = d.messages[0]?.state;
+                                  if (!p) {
+                                      console.error('Agent state not found. Continuing polling.');
+                                      return;
+                                  }
+                                  console.log(`Agent state: ${p}`);
+                                  let g = new Date(),
+                                      l = g - a;
+                                  l >= r && 'connected' === p
+                                      ? (console.log('Timeout condition met, and agent is connected. Proceeding with disconnection.'), await u(t, e, n, o), clearInterval(s))
+                                      : l < r && console.log(`Timeout not yet reached. Remaining time: ${r - l} ms.`);
+                              } catch (h) {
+                                  console.error('Error polling for agent state:', h);
+                              }
+                          }, 5e3);
+                      }
+                      async function u(t, e, n, o) {
+                          try {
+                              await i.patchConversationsMessageParticipant(t, e, { body: { state: 'disconnected', wrapup: { code: n } } }),
+                                  console.log(`Disconnected agent participant ${e} in conversation with ID: ${t}`),
+                                  await i.postConversationsMessageParticipantCommunicationWrapup(t, e, o, { body: { code: n } }),
+                                  console.log(`Wrapup sent for communication ${o} in conversation ${t}`);
+                          } catch (r) {
+                              console.error('Error disconnecting or sending wrapup:', r);
+                          }
+                      }
+                      n.setPersistSettings(!0, 'conversationMonitorApp'),
+                          n
+                              .loginImplicitGrant(c, d, { state: p })
+                              .then((t) => o.getUsersMe().then((e) => ({ me: e, state: t.state })))
+                              .then(({ me: t, state: e }) => {
+                                  let n = JSON.parse(e),
+                                      i = n.conversationId,
+                                      o = n.wrapupId,
+                                      r = n.timeoutMinutes;
+                                  if (!i) {
+                                      console.error('Missing conversationId in state. Cannot proceed.'),
+                                          (document.getElementById('widget').innerHTML = '<h2>Error</h2><p>Missing conversationId. Please provide a valid conversationId in the URL.</p>');
+                                      return;
+                                  }
+                                  g(i, r, o, t.id);
+                              })
+                              .catch((t) => {
+                                  console.error('Authentication or user fetch failed:', t);
+                              });
+                  }));
         </script>
     </body>
 </html>
