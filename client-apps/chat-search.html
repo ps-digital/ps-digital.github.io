@@ -1,427 +1,479 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat Search</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff6600'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f8fafc;
-      min-height: 100vh;
-      color: #1e293b;
-      line-height: 1.5;
-      margin: 0;
-      padding: 0;
-    }
-    
-    .header-panel {
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      border-bottom: 1px solid #e2e8f0;
-      padding: 1rem 1.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    
-    .header-panel-content {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-    }
-    
-    .genesys-logo {
-      width: 70px;
-      height: auto;
-      opacity: 0.9;
-      transition: all 0.2s ease;
-      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-      border-radius: 4px;
-    }
-    
-    .genesys-logo:hover {
-      opacity: 1;
-      transform: translateY(-1px);
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-    }
-    
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem;
-      position: relative;
-    }
-    
-    .header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-    
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #ff6600, #ff8533);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .subtitle {
-      color: #64748b;
-      font-size: 1.1rem;
-      font-weight: 400;
-    }
-    
-    .search-container {
-      position: relative;
-      margin-bottom: 2rem;
-    }
-    
-    .search-bar {
-      position: relative;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      border: 2px solid #e2e8f0;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
-    }
-    
-    .search-bar:focus-within {
-      border-color: #ff6600;
-      box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      transform: translateY(-1px);
-    }
-    
-    .search-bar input {
-      width: 100%;
-      border: none;
-      background: transparent;
-      font-size: 1.1rem;
-      padding: 1.25rem 1.5rem 1.25rem 4rem;
-      outline: none;
-      font-weight: 500;
-    }
-    
-    .search-bar input::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
-    
-    .search-icon {
-      position: absolute;
-      left: 1.25rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #64748b;
-      font-size: 1.25rem;
-      transition: color 0.2s;
-    }
-    
-    .search-bar:focus-within .search-icon {
-      color: #ff6600;
-    }
-    
-    #loading {
-      text-align: center;
-      padding: 3rem 0;
-      color: #64748b;
-      font-size: 1.1rem;
-      font-weight: 500;
-    }
-    
-    #search-meta {
-      background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 1rem 1.5rem;
-      margin-bottom: 1.5rem;
-      color: #475569;
-      font-weight: 500;
-      text-align: center;
-      border-left: 4px solid #ff6600;
-    }
-    
-    .results-container {
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      border: 1px solid #e2e8f0;
-      overflow: hidden;
-    }
-    
-    .search-result {
-      padding: 1.5rem;
-      border-bottom: 1px solid #f1f5f9;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-    
-    .search-result:last-child {
-      border-bottom: none;
-    }
-    
-    .search-result:hover {
-      background: linear-gradient(135deg, #fef7ed, #fed7aa);
-      transform: translateX(4px);
-      border-left: 4px solid #ff6600;
-      padding-left: 1.25rem;
-    }
-    
-    .search-result-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    
-    .avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      object-fit: cover;
-      border: 3px solid #f1f5f9;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .user-info {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .user-name {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #0f172a;
-      margin-bottom: 0.25rem;
-    }
-    
-    .message-date {
-      color: #64748b;
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-    
-    .chat-labels {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    
-    .chat-type-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      text-transform: capitalize;
-      letter-spacing: 0.025em;
-    }
-    
-    .chat-type-direct {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: white;
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
-    }
-    
-    .chat-type-group {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-    }
-    
-    .open-chat-btn {
-      background: linear-gradient(135deg, #ff6600, #ea580c);
-      color: white;
-      border: none;
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      box-shadow: 0 2px 4px rgba(255, 102, 0, 0.3);
-    }
-    
-    .open-chat-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 102, 0, 0.4);
-      background: linear-gradient(135deg, #ea580c, #dc2626);
-    }
-    
-    .message-content {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      margin-left: 0;
-      border-left: 3px solid #e2e8f0;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      color: #374151;
-    }
-    
-    .message-content p {
-      margin: 0;
-    }
-    
-    .message-content code {
-      background: #e0e7ff;
-      color: #3730a3;
-      padding: 0.125rem 0.375rem;
-      border-radius: 4px;
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-    
-    .no-results {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #64748b;
-      font-size: 1.1rem;
-    }
-    
-    .no-results-icon {
-      font-size: 3rem;
-      color: #cbd5e1;
-      margin-bottom: 1rem;
-    }
-    
-    @media (max-width: 768px) {
-      .container {
-        padding: 1rem;
-      }
-      
-      h1 {
-        font-size: 2rem;
-      }
-      
-      .search-result-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-      }
-      
-      .chat-labels {
-        width: 100%;
-        justify-content: space-between;
-      }
-      
-      .message-content {
-        margin-left: 0;
-        margin-top: 1rem;
-      }
-    }
-    
-    .hidden {
-      display: none !important;
-    }
-    
-    .author-info {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-    
-    .author-info:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      transform: translateY(-1px);
-    }
-    
-    .author-name {
-      font-weight: 600;
-      color: #1e293b;
-      margin-bottom: 0.125rem;
-      font-size: 0.875rem;
-    }
-    
-    .author-team {
-      font-size: 0.75rem;
-      color: #ff6600;
-      font-weight: 500;
-    }
-    
-    @media (max-width: 768px) {
-      .author-info {
-        position: static;
-        margin: 2rem auto 0;
-        text-align: center;
-        max-width: 200px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="header-panel">
-    <div class="header-panel-content">
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFdSAE04XD0Oi1AIg4lf3FYM0evHgxT-rqyA&s" alt="Genesys" class="genesys-logo">
-    </div>
-  </div>
-  
-  <div class="container">
-    <div class="header">
-      <h1>Chat Search</h1>
-      <p class="subtitle">Search across all your conversations and group chats</p>
-    </div>
-    
-    <div class="search-container">
-      <div class="search-bar">
-        <i class="fa fa-search search-icon"></i>
-        <input id="search-input" type="text" placeholder="Search your chats..." autocomplete="off" maxlength="100" />
-      </div>
-      <div id="search-meta" class="hidden"></div>
-    </div>
-    
-    <div id="loading">
-      <i class="fa fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>
-      Loading...
-    </div>
-    
-    <div id="auth-failure" class="hidden" style="display:none; background:#fff6f6; color:#c0392b; border:1px solid #f5c6cb; border-radius:8px; padding:16px; margin-bottom:18px; font-size:1em; text-align:center; box-shadow:0 2px 8px rgba(192,57,43,0.08);">
-      <i class="fa fa-exclamation-circle" style="margin-right:8px;"></i>
-      Oops! Authentication failed. Please refresh the page or check your login.
-    </div>
-    
-    <div id="main-app" class="hidden">
-      <div id="search-results" class="hidden"></div>
-    </div>
-  </div>
-  
-  <div class="author-info">
-    <div class="author-name">Bilal Zaghloul</div>
-    <div class="author-team">AI Advisory Team</div>
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
-  <!-- Genesys Cloud Platform SDK -->
-  <script src="https://sdk-cdn.mypurecloud.com/javascript/72.0.0/purecloud-platform-client-v2.min.js"></script>
-  <script src="/client-apps/js/chat-search.js"></script>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Chat Search</title>
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff6600'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E"
+        />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <script type="text/javascript" charset="utf-8">
+            (function (g, e, n, es, ys) {
+                g['_genesysJs'] = e;
+                g[e] =
+                    g[e] ||
+                    function () {
+                        (g[e].q = g[e].q || []).push(arguments);
+                    };
+                g[e].t = 1 * new Date();
+                g[e].c = es;
+                ys = document.createElement('script');
+                ys.async = 1;
+                ys.src = n;
+                ys.charset = 'utf-8';
+                document.head.appendChild(ys);
+            })(window, 'Genesys', 'https://apps.mypurecloud.de/genesys-bootstrap/genesys.min.js', {
+                environment: 'prod-euc1',
+                deploymentId: '1770c668-983d-446c-88c8-60a46273553b',
+            });
+        </script>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                background: #f8fafc;
+                min-height: 100vh;
+                color: #1e293b;
+                line-height: 1.5;
+                margin: 0;
+                padding: 0;
+            }
+
+            .header-panel {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border-bottom: 1px solid #e2e8f0;
+                padding: 1rem 1.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+
+            .header-panel-content {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+            }
+
+            .genesys-logo {
+                width: 70px;
+                height: auto;
+                opacity: 0.9;
+                transition: all 0.2s ease;
+                filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 4px;
+            }
+
+            .genesys-logo:hover {
+                opacity: 1;
+                transform: translateY(-1px);
+                filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            }
+
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 2rem;
+                position: relative;
+            }
+
+            .header {
+                text-align: center;
+                margin-bottom: 3rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+                font-weight: 800;
+                color: #0f172a;
+                margin-bottom: 0.5rem;
+                background: linear-gradient(135deg, #ff6600, #ff8533);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .subtitle {
+                color: #64748b;
+                font-size: 1.1rem;
+                font-weight: 400;
+            }
+
+            .search-container {
+                position: relative;
+                margin-bottom: 2rem;
+            }
+
+            .search-bar {
+                position: relative;
+                background: #ffffff;
+                border-radius: 16px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                border: 2px solid #e2e8f0;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                overflow: hidden;
+            }
+
+            .search-bar:focus-within {
+                border-color: #ff6600;
+                box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                transform: translateY(-1px);
+            }
+
+            .search-bar input {
+                width: 100%;
+                border: none;
+                background: transparent;
+                font-size: 1.1rem;
+                padding: 1.25rem 1.5rem 1.25rem 4rem;
+                outline: none;
+                font-weight: 500;
+            }
+
+            .search-bar input::placeholder {
+                color: #94a3b8;
+                font-weight: 400;
+            }
+
+            .search-icon {
+                position: absolute;
+                left: 1.25rem;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #64748b;
+                font-size: 1.25rem;
+                transition: color 0.2s;
+            }
+
+            .search-bar:focus-within .search-icon {
+                color: #ff6600;
+            }
+
+            #loading {
+                text-align: center;
+                padding: 3rem 0;
+                color: #64748b;
+                font-size: 1.1rem;
+                font-weight: 500;
+            }
+
+            #search-meta {
+                background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+                border: 1px solid #cbd5e1;
+                border-radius: 12px;
+                padding: 1rem 1.5rem;
+                margin-bottom: 1.5rem;
+                color: #475569;
+                font-weight: 500;
+                text-align: center;
+                border-left: 4px solid #ff6600;
+            }
+
+            .results-container {
+                background: #ffffff;
+                border-radius: 16px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                border: 1px solid #e2e8f0;
+                overflow: hidden;
+            }
+
+            .search-result {
+                padding: 1.5rem;
+                border-bottom: 1px solid #f1f5f9;
+                transition: all 0.2s ease;
+                position: relative;
+            }
+
+            .search-result:last-child {
+                border-bottom: none;
+            }
+
+            .search-result:hover {
+                background: linear-gradient(135deg, #fef7ed, #fed7aa);
+                transform: translateX(4px);
+                border-left: 4px solid #ff6600;
+                padding-left: 1.25rem;
+            }
+
+            .search-result-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .avatar {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                object-fit: cover;
+                border: 3px solid #f1f5f9;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .user-info {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .user-name {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #0f172a;
+                margin-bottom: 0.25rem;
+            }
+
+            .message-date {
+                color: #64748b;
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+
+            .chat-labels {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            .chat-type-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 1rem;
+                border-radius: 20px;
+                font-size: 0.875rem;
+                font-weight: 600;
+                text-transform: capitalize;
+                letter-spacing: 0.025em;
+            }
+
+            .chat-type-direct {
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                color: white;
+                box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+            }
+
+            .chat-type-group {
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+            }
+
+            .open-chat-btn {
+                background: linear-gradient(135deg, #ff6600, #ea580c);
+                color: white;
+                border: none;
+                padding: 0.75rem 1rem;
+                border-radius: 10px;
+                font-size: 0.875rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                box-shadow: 0 2px 4px rgba(255, 102, 0, 0.3);
+            }
+
+            .open-chat-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(255, 102, 0, 0.4);
+                background: linear-gradient(135deg, #ea580c, #dc2626);
+            }
+
+            .message-content {
+                background: #f8fafc;
+                border-radius: 12px;
+                padding: 1rem 1.25rem;
+                margin-left: 0;
+                border-left: 3px solid #e2e8f0;
+                font-size: 0.95rem;
+                line-height: 1.6;
+                color: #374151;
+            }
+
+            .message-content p {
+                margin: 0;
+            }
+
+            .message-content code {
+                background: #e0e7ff;
+                color: #3730a3;
+                padding: 0.125rem 0.375rem;
+                border-radius: 4px;
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+
+            .no-results {
+                text-align: center;
+                padding: 4rem 2rem;
+                color: #64748b;
+                font-size: 1.1rem;
+            }
+
+            .no-results-icon {
+                font-size: 3rem;
+                color: #cbd5e1;
+                margin-bottom: 1rem;
+            }
+
+            @media (max-width: 768px) {
+                .container {
+                    padding: 1rem;
+                }
+
+                h1 {
+                    font-size: 2rem;
+                }
+
+                .search-result-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                }
+
+                .chat-labels {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+
+                .message-content {
+                    margin-left: 0;
+                    margin-top: 1rem;
+                }
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            .author-info {
+                position: fixed;
+                bottom: 1.5rem;
+                right: 1.5rem;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 0.75rem 1rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                font-size: 0.875rem;
+                transition: all 0.2s ease;
+            }
+
+            .author-info:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                transform: translateY(-1px);
+            }
+
+            .author-name {
+                font-weight: 600;
+                color: #1e293b;
+                margin-bottom: 0.125rem;
+                font-size: 0.875rem;
+            }
+
+            .author-team {
+                font-size: 0.75rem;
+                color: #ff6600;
+                font-weight: 500;
+            }
+
+            @media (max-width: 768px) {
+                .author-info {
+                    position: static;
+                    margin: 2rem auto 0;
+                    text-align: center;
+                    max-width: 200px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header-panel">
+            <div class="header-panel-content">
+                <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFdSAE04XD0Oi1AIg4lf3FYM0evHgxT-rqyA&s"
+                    alt="Genesys"
+                    class="genesys-logo"
+                />
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="header">
+                <h1>Chat Search</h1>
+                <p class="subtitle">Search across all your conversations and group chats</p>
+            </div>
+
+            <div class="search-container">
+                <div class="search-bar">
+                    <i class="fa fa-search search-icon"></i>
+                    <input
+                        id="search-input"
+                        type="text"
+                        placeholder="Search your chats..."
+                        autocomplete="off"
+                        maxlength="100"
+                    />
+                </div>
+                <div id="search-meta" class="hidden"></div>
+            </div>
+
+            <div id="loading">
+                <i class="fa fa-spinner fa-spin" style="margin-right: 0.5rem"></i>
+                Loading...
+            </div>
+
+            <div
+                id="auth-failure"
+                class="hidden"
+                style="
+                    display: none;
+                    background: #fff6f6;
+                    color: #c0392b;
+                    border: 1px solid #f5c6cb;
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin-bottom: 18px;
+                    font-size: 1em;
+                    text-align: center;
+                    box-shadow: 0 2px 8px rgba(192, 57, 43, 0.08);
+                "
+            >
+                <i class="fa fa-exclamation-circle" style="margin-right: 8px"></i>
+                Oops! Authentication failed. Please refresh the page or check your login.
+            </div>
+
+            <div id="main-app" class="hidden">
+                <div id="search-results" class="hidden"></div>
+            </div>
+        </div>
+
+        <div class="author-info">
+            <div class="author-name">Bilal Zaghloul</div>
+            <div class="author-team">AI Advisory Team</div>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+        <!-- Genesys Cloud Platform SDK -->
+        <script src="https://sdk-cdn.mypurecloud.com/javascript/72.0.0/purecloud-platform-client-v2.min.js"></script>
+        <script src="/client-apps/js/chat-search.js"></script>
+    </body>
 </html>
