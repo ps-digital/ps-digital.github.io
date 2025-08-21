@@ -87,12 +87,79 @@ function debounce(func, wait) {
     };
 }
 
+// Function to highlight search terms in HTML content
+function highlightSearchTerms(html, searchTerm) {
+    // Always trim the search term
+    searchTerm = searchTerm ? searchTerm.trim() : '';
+
+    if (!searchTerm || searchTerm.length < 2) {
+        return html;
+    }
+
+    // Split search term into individual words and filter out short words
+    const searchWords = searchTerm
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((word) => word.trim().length >= 2);
+
+    if (searchWords.length === 0) {
+        return html;
+    }
+
+    // Create a temporary DOM element to parse the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+
+    // Function to recursively highlight text nodes
+    function highlightTextNodes(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            let text = node.textContent;
+            let hasMatch = false;
+
+            searchWords.forEach((word) => {
+                const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`\\b(${escapedWord})\\b`, 'gi');
+                if (regex.test(text)) {
+                    hasMatch = true;
+                    text = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+                }
+            });
+
+            if (hasMatch) {
+                const wrapper = document.createElement('span');
+                wrapper.innerHTML = text;
+                node.parentNode.replaceChild(wrapper, node);
+
+                // Process the new nodes
+                const childNodes = Array.from(wrapper.childNodes);
+                childNodes.forEach((child) => {
+                    wrapper.parentNode.insertBefore(child, wrapper);
+                });
+                wrapper.parentNode.removeChild(wrapper);
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            // Skip highlighting inside code elements and other special elements
+            if (!['CODE', 'PRE', 'SCRIPT', 'STYLE', 'MARK'].includes(node.tagName)) {
+                const children = Array.from(node.childNodes);
+                children.forEach((child) => highlightTextNodes(child));
+            }
+        }
+    }
+
+    highlightTextNodes(tempDiv);
+    return tempDiv.innerHTML;
+}
+
 function searchChats(term, page = 1) {
     console.log('searchChats called with term:', term, 'page:', page);
+
+    // Always trim the search term
+    term = term ? term.trim() : '';
+
     lastSearchTerm = term;
     currentPage = page;
 
-    if (!term || term.length < 4) {
+    if (!term || term.length < 3) {
         console.log('Term too short or empty, hiding results');
         $('#search-results').addClass('hidden');
         $('#search-meta').addClass('hidden');
@@ -367,7 +434,7 @@ function renderSearchResults() {
               </a>
             </div>
           </div>
-          <div class="message-content">${md.render(chatResult.body)}</div>
+          <div class="message-content">${highlightSearchTerms(md.render(chatResult.body), lastSearchTerm)}</div>
         </div>`;
         });
         resultsHtml += '</div>';
@@ -376,7 +443,7 @@ function renderSearchResults() {
         if (totalPages > 1) {
             paginationHtml = generatePagination();
         }
-    } else if (lastSearchTerm && lastSearchTerm.length >= 4) {
+    } else if (lastSearchTerm && lastSearchTerm.length >= 3) {
         resultsHtml = `
       <div class="no-results">
         <div class="no-results-icon">
@@ -384,7 +451,7 @@ function renderSearchResults() {
         </div>
         <div>No results found. Try searching with different keywords.</div>
         <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #94a3b8;">
-          Your search must be at least 4 characters long.
+          Your search must be at least 3 characters long.
         </div>
       </div>`;
         metaHtml = `No results found for "${lastSearchTerm}"`;
