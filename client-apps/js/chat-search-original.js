@@ -275,6 +275,7 @@ function getSearchResults(data) {
                 body: chat.body,
                 created: chat.created,
                 userName: name,
+                title: chat.from.title || null, // Extract title from API response
                 image: image,
                 chatType: chatType,
                 groupName: groupName,
@@ -421,6 +422,7 @@ function renderSearchResults() {
             <img src="${chatResult.image}" alt="Avatar" class="avatar">
             <div class="user-info">
               <div class="user-name">${chatResult.userName}</div>
+              ${chatResult.title ? `<div class="user-title">${chatResult.title}</div>` : ''}
               <div class="message-date">${new Date(chatResult.created).toLocaleString()}</div>
             </div>
             <div class="chat-labels">
