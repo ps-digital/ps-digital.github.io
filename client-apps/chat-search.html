@@ -163,121 +163,228 @@
                 color: #ff451c;
             }
 
-            .date-filter-container {
+            /* Modern Filters Bar - Compact Design */
+            .filters-bar {
                 margin-top: 1.5rem;
-                background: #ffffff;
+                padding: 1.25rem;
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
                 border: 1px solid #e2e8f0;
                 border-radius: 12px;
-                padding: 1.25rem;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                display: flex;
+                gap: 2rem;
+                align-items: flex-start;
             }
 
-            .date-filter-header {
+            .filter-group {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+                flex: 1;
+            }
+
+            .filter-group:last-child {
+                flex: 0 0 auto;
+                min-width: 200px;
+            }
+
+            .filter-label {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
-                margin-bottom: 1rem;
-                font-size: 0.875rem;
+                font-size: 0.8rem;
                 font-weight: 600;
                 color: #374151;
-            }
-
-            .date-presets {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                margin-bottom: 1rem;
-                justify-content: center;
-            }
-
-            .date-preset {
-                background: #f8fafc;
-                border: 1px solid #e2e8f0;
-                border-radius: 20px;
-                padding: 0.5rem 1rem;
-                font-size: 0.875rem;
-                font-weight: 500;
-                color: #64748b;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                white-space: nowrap;
-            }
-
-            .date-preset:hover {
-                background: #f1f5f9;
-                border-color: #cbd5e1;
-                color: #475569;
-            }
-
-            .date-preset.active {
-                background: linear-gradient(135deg, #ff451c, #ff6633);
-                border-color: #ff451c;
-                color: white;
-                box-shadow: 0 2px 4px rgba(255, 69, 28, 0.3);
-            }
-
-            .custom-date-range {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 1rem;
-                align-items: end;
-            }
-
-            .date-input-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .date-input-group label {
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: #64748b;
                 text-transform: uppercase;
                 letter-spacing: 0.025em;
             }
 
-            .date-input-group input {
+            .filter-label i {
+                color: #ff451c;
+                font-size: 0.875rem;
+            }
+
+            /* Compact Date Presets */
+            .date-presets {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                align-items: center;
+            }
+
+            .date-preset {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                color: #64748b;
+                padding: 0.5rem 0.875rem;
+                border-radius: 8px;
+                font-size: 0.8rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                white-space: nowrap;
+            }
+
+            .date-preset:hover {
+                border-color: #ff451c;
+                color: #ff451c;
+                transform: translateY(-1px);
+            }
+
+            .date-preset.active {
+                background: #ff451c;
+                border-color: #ff451c;
+                color: white;
+            }
+
+            .date-preset.custom-btn {
+                background: #6366f1;
+                border-color: #6366f1;
+                color: white;
+            }
+
+            .date-preset.custom-btn:hover {
+                background: #5855eb;
+                border-color: #5855eb;
+                color: white;
+            }
+
+            /* Compact Custom Date Range */
+            .custom-date-range {
+                margin-top: 0.75rem;
+                padding: 1rem;
                 background: #f8fafc;
                 border: 1px solid #e2e8f0;
                 border-radius: 8px;
-                padding: 0.75rem;
-                font-size: 0.875rem;
-                transition: all 0.2s ease;
-                width: 100%;
             }
 
-            .date-input-group input:focus {
-                outline: none;
+            .date-inputs-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+
+            .date-input-wrapper {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .date-input-wrapper label {
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: #6b7280;
+                text-transform: uppercase;
+            }
+
+            .date-input-wrapper input {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                padding: 0.625rem 0.75rem;
+                font-size: 0.8rem;
+                color: #374151;
+                transition: all 0.15s ease;
+            }
+
+            .date-input-wrapper input:focus {
                 border-color: #ff451c;
-                background: #fff;
-                box-shadow: 0 0 0 3px rgba(255, 69, 28, 0.1);
+                box-shadow: 0 0 0 2px rgba(255, 69, 28, 0.1);
+                outline: none;
             }
 
-            .date-filter-summary {
-                margin-top: 0.75rem;
-                padding: 0.75rem;
-                background: #f8fafc;
+            /* Compact Sort Dropdown */
+            .sort-wrapper {
+                position: relative;
+            }
+
+            .sort-select {
+                width: 100%;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
                 border-radius: 8px;
-                font-size: 0.875rem;
-                color: #64748b;
-                text-align: center;
-                border-left: 3px solid #ff451c;
+                padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+                font-size: 0.8rem;
+                font-weight: 500;
+                color: #374151;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                outline: none;
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23FF451C' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+                background-position: right 0.75rem center;
+                background-repeat: no-repeat;
+                background-size: 1em 1em;
             }
 
+            .sort-select:focus {
+                border-color: #ff451c;
+                box-shadow: 0 0 0 2px rgba(255, 69, 28, 0.1);
+            }
+
+            .sort-select:hover {
+                border-color: #ff451c;
+            }
+
+            /* Compact Filter Status Bar */
+            .filter-status {
+                margin-top: 0.75rem;
+                padding: 0.75rem 1rem;
+                background: #f1f5f9;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                display: flex;
+                gap: 1.5rem;
+                align-items: center;
+                font-size: 0.8rem;
+                color: #64748b;
+            }
+
+            .status-item {
+                display: flex;
+                align-items: center;
+                gap: 0.375rem;
+                font-weight: 500;
+            }
+
+            .status-item i {
+                color: #ff451c;
+                opacity: 0.8;
+                font-size: 0.75rem;
+            }
+
+            /* Mobile Responsive */
             @media (max-width: 768px) {
+                .filters-bar {
+                    flex-direction: column;
+                    gap: 1.25rem;
+                    padding: 1rem;
+                }
+
+                .filter-group:last-child {
+                    min-width: auto;
+                }
+
                 .date-presets {
                     justify-content: center;
                 }
 
-                .custom-date-range {
+                .date-inputs-row {
                     grid-template-columns: 1fr;
-                    gap: 0.75rem;
                 }
 
-                .date-filter-container {
-                    padding: 1rem;
+                .filter-status {
+                    flex-direction: column;
+                    gap: 0.75rem;
+                    text-align: center;
                 }
+            }
+
+            /* Legacy compatibility - hide old styles */
+            .date-filter-container,
+            .filter-section,
+            .filters-container {
+                display: none !important;
             }
 
             #loading {
@@ -306,6 +413,7 @@
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
                 border: 1px solid #e2e8f0;
                 overflow: hidden;
+                position: relative;
             }
 
             .search-result {
@@ -313,6 +421,51 @@
                 border-bottom: 1px solid #f1f5f9;
                 transition: all 0.2s ease;
                 position: relative;
+                opacity: 0;
+                transform: translateY(20px);
+                animation: fadeInUp 0.6s ease forwards;
+            }
+
+            .search-result:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+            .search-result:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .search-result:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+            .search-result:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+            .search-result:nth-child(5) {
+                animation-delay: 0.5s;
+            }
+            .search-result:nth-child(6) {
+                animation-delay: 0.6s;
+            }
+            .search-result:nth-child(7) {
+                animation-delay: 0.7s;
+            }
+            .search-result:nth-child(8) {
+                animation-delay: 0.8s;
+            }
+            .search-result:nth-child(9) {
+                animation-delay: 0.9s;
+            }
+            .search-result:nth-child(10) {
+                animation-delay: 1s;
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .search-result:last-child {
@@ -487,6 +640,107 @@
                 font-size: 3rem;
                 color: #cbd5e1;
                 margin-bottom: 1rem;
+            }
+
+            /* Search results container */
+            #search-results {
+                position: relative;
+            }
+
+            /* Loading Animation Styles */
+            .search-loading {
+                text-align: center;
+                padding: 4rem 2rem;
+                color: #64748b;
+                font-size: 1.1rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .loading-spinner {
+                width: 40px;
+                height: 40px;
+                border: 3px solid #f3f4f6;
+                border-top: 3px solid #ff451c;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            .loading-spinner-small {
+                width: 24px;
+                height: 24px;
+                border: 2px solid #f3f4f6;
+                border-top: 2px solid #ff451c;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            /* Search overlay for elegant loading */
+            .search-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.9);
+                backdrop-filter: blur(2px);
+                display: none;
+                z-index: 10;
+                border-radius: 16px;
+            }
+
+            .overlay-content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                color: #64748b;
+                font-size: 0.95rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Fade transition for results */
+            .results-container {
+                animation: fadeIn 0.4s ease-in-out;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            /* Searching state animation */
+            .searching {
+                animation: pulse 1.5s ease-in-out infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.7;
+                }
             }
 
             @media (max-width: 768px) {
@@ -673,35 +927,67 @@
 
                 <div id="search-meta" class="hidden"></div>
 
-                <!-- Date Filter -->
-                <div class="date-filter-container">
-                    <div class="date-filter-header">
-                        <i class="fa fa-calendar-alt"></i>
-                        Date Range
-                    </div>
-
-                    <div class="date-presets">
-                        <button class="date-preset active" data-preset="anytime">Anytime</button>
-                        <button class="date-preset" data-preset="today">Today</button>
-                        <button class="date-preset" data-preset="yesterday">Yesterday</button>
-                        <button class="date-preset" data-preset="thisWeek">This Week</button>
-                        <button class="date-preset" data-preset="lastWeek">Last Week</button>
-                        <button class="date-preset" data-preset="thisMonth">This Month</button>
-                        <button class="date-preset" data-preset="custom">Custom Range</button>
-                    </div>
-
-                    <div id="custom-date-inputs" class="custom-date-range hidden">
-                        <div class="date-input-group">
-                            <label for="start-date">From Date</label>
-                            <input id="start-date" type="date" />
+                <!-- Modern Filters Bar -->
+                <div class="filters-bar">
+                    <!-- Date Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fa fa-calendar-alt"></i>
+                            Date Range
+                        </label>
+                        <div class="date-presets">
+                            <button class="date-preset active" data-preset="anytime">All Time</button>
+                            <button class="date-preset" data-preset="today">Today</button>
+                            <button class="date-preset" data-preset="yesterday">Yesterday</button>
+                            <button class="date-preset" data-preset="thisWeek">This Week</button>
+                            <button class="date-preset" data-preset="lastWeek">Last Week</button>
+                            <button class="date-preset" data-preset="thisMonth">This Month</button>
+                            <button class="date-preset custom-btn" data-preset="custom">
+                                <i class="fa fa-calendar-plus"></i>
+                                Custom
+                            </button>
                         </div>
-                        <div class="date-input-group">
-                            <label for="end-date">To Date</label>
-                            <input id="end-date" type="date" />
+
+                        <div id="custom-date-inputs" class="custom-date-range hidden">
+                            <div class="date-inputs-row">
+                                <div class="date-input-wrapper">
+                                    <label for="start-date">From</label>
+                                    <input id="start-date" type="date" />
+                                </div>
+                                <div class="date-input-wrapper">
+                                    <label for="end-date">To</label>
+                                    <input id="end-date" type="date" />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="date-filter-summary" class="date-filter-summary">Showing conversations from all time</div>
+                    <!-- Sort Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fa fa-sort"></i>
+                            Sort By
+                        </label>
+                        <div class="sort-wrapper">
+                            <select id="sort-select" class="sort-select">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="relevance">Most Relevant</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Status Bar -->
+                <div id="filter-status" class="filter-status">
+                    <div class="status-item">
+                        <i class="fa fa-clock"></i>
+                        <span id="date-status">All conversations</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fa fa-sort-amount-down"></i>
+                        <span id="sort-status">Newest first</span>
+                    </div>
                 </div>
             </div>
 

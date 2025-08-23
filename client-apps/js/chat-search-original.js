@@ -23,6 +23,10 @@ let currentDateFilter = 'anytime';
 let customStartDate = null;
 let customEndDate = null;
 
+// Sort variables
+let currentSortBy = 'created';
+let currentSortOrder = 'DESC';
+
 // Upgrade to HTTPS if needed
 if (location.protocol !== 'https:') {
     location.replace(`https:${location.href.substring(location.protocol.length)}`);
@@ -59,6 +63,9 @@ function bootstrap() {
     // Date filter event listeners - bind using event delegation to handle dynamic content
     $(document).on('click', '.date-preset', handleDatePresetClick);
     $(document).on('change', '#start-date, #end-date', handleCustomDateChange);
+
+    // Sort filter event listeners
+    $(document).on('change', '#sort-select', handleSortChange);
 
     console.log('About to call getUsersMe');
     usersApi
@@ -190,7 +197,24 @@ function searchChats(term, page = 1) {
     }
     searchMeta += '...';
 
-    $('#search-meta').text(searchMeta).removeClass('hidden');
+    // Show search meta with fade animation and pulse effect
+    $('#search-meta').fadeOut(150, function () {
+        $(this).text(searchMeta).removeClass('hidden').addClass('searching').hide().fadeIn(300);
+    });
+
+    // Add subtle loading overlay instead of replacing content
+    const $searchResults = $('#search-results');
+    if (!$searchResults.find('.search-overlay').length) {
+        $searchResults.append(`
+            <div class="search-overlay">
+                <div class="overlay-content">
+                    <div class="loading-spinner-small"></div>
+                    <div>Loading new results...</div>
+                </div>
+            </div>
+        `);
+        $('.search-overlay').fadeIn(300);
+    }
 
     // Build basic query
     let query = [{ fields: ['body'], value: term }];
@@ -211,12 +235,19 @@ function searchChats(term, page = 1) {
     let body = {
         pageSize: 50,
         pageNumber: page,
-        sortBy: 'created',
-        sortOrder: 'DESC',
         expand: ['from', 'to'],
         types: ['messages'],
         query: query,
     };
+
+    // Add sort parameters based on current sort selection
+    if (currentSortBy === 'relevance') {
+        body.sortOrder = 'SCORE';
+        // Don't add sortBy for relevance (SCORE sorting)
+    } else {
+        body.sortBy = currentSortBy;
+        body.sortOrder = currentSortOrder;
+    }
 
     searchApi
         .postSearch(body, { profile: false })
@@ -287,17 +318,31 @@ function getSearchResults(data) {
         // If we have groups to look up, fetch their details
         if (pendingGroupLookups.length > 0) {
             fetchGroupDetails(pendingGroupLookups).then(() => {
-                // Sort by latest at the top after group details are fetched
-                searchResults.sort((a, b) => new Date(b.created) - new Date(a.created));
+                // Apply current sorting after group details are fetched
+                applySortingToResults();
                 renderSearchResults();
             });
         } else {
-            // Sort by latest at the top
-            searchResults.sort((a, b) => new Date(b.created) - new Date(a.created));
+            // Apply current sorting
+            applySortingToResults();
             renderSearchResults();
         }
     } else {
         renderSearchResults();
+    }
+}
+
+// Function to apply current sorting to search results
+function applySortingToResults() {
+    if (currentSortBy === 'relevance') {
+        // For relevance, results are already sorted by the API
+        return;
+    } else if (currentSortBy === 'created') {
+        if (currentSortOrder === 'DESC') {
+            searchResults.sort((a, b) => new Date(b.created) - new Date(a.created));
+        } else {
+            searchResults.sort((a, b) => new Date(a.created) - new Date(b.created));
+        }
     }
 }
 
@@ -459,21 +504,41 @@ function renderSearchResults() {
         metaHtml = `No results found for "${lastSearchTerm}"`;
     }
 
-    $('#search-results').html(resultsHtml).removeClass('hidden');
+    // Complete fade-away then fresh fade-in animation
+    const $searchResults = $('#search-results');
+    const $searchMeta = $('#search-meta');
+    const $paginationTop = $('#pagination-top');
+    const $pagination = $('#pagination');
 
-    if (metaHtml) {
-        $('#search-meta').html(metaHtml).removeClass('hidden');
-    } else {
-        $('#search-meta').addClass('hidden');
-    }
+    // Smooth transition: remove overlay then show new results
+    $('.search-overlay').fadeOut(250, function () {
+        $(this).remove();
 
-    if (paginationHtml) {
-        $('#pagination-top').html(paginationHtml).removeClass('hidden');
-        $('#pagination').html(paginationHtml).removeClass('hidden');
-    } else {
-        $('#pagination-top').addClass('hidden');
-        $('#pagination').addClass('hidden');
-    }
+        // Then smoothly update content
+        $searchResults.fadeOut(300, function () {
+            $searchResults.html(resultsHtml).removeClass('hidden').hide().fadeIn(400);
+        });
+
+        if (metaHtml) {
+            $searchMeta.fadeOut(200, function () {
+                $searchMeta.html(metaHtml).removeClass('hidden searching').hide().fadeIn(400);
+            });
+        } else {
+            $searchMeta.fadeOut(200).removeClass('searching');
+        }
+
+        if (paginationHtml) {
+            $paginationTop.fadeOut(200, function () {
+                $paginationTop.html(paginationHtml).removeClass('hidden').hide().fadeIn(400);
+            });
+            $pagination.fadeOut(200, function () {
+                $pagination.html(paginationHtml).removeClass('hidden').hide().fadeIn(400);
+            });
+        } else {
+            $paginationTop.fadeOut(200);
+            $pagination.fadeOut(200);
+        }
+    });
 }
 
 function generatePagination() {
@@ -551,6 +616,30 @@ function showPaginationLoading(page) {
     `;
     $('#pagination-top').html(loadingHtml);
     $('#pagination').html(loadingHtml);
+}
+
+// Sort Filter Functions
+function handleSortChange(event) {
+    const sortValue = $(event.target).val();
+
+    if (sortValue === 'relevance') {
+        currentSortBy = 'relevance';
+        currentSortOrder = 'SCORE';
+        $('#sort-status').text('Most relevant first');
+    } else if (sortValue === 'newest') {
+        currentSortBy = 'created';
+        currentSortOrder = 'DESC';
+        $('#sort-status').text('Newest first');
+    } else if (sortValue === 'oldest') {
+        currentSortBy = 'created';
+        currentSortOrder = 'ASC';
+        $('#sort-status').text('Oldest first');
+    }
+
+    // Trigger search if there's a search term
+    if (lastSearchTerm && lastSearchTerm.length >= 3) {
+        searchChats(lastSearchTerm, 1);
+    }
 }
 
 // Date Filter Functions
@@ -654,35 +743,36 @@ function updateDateFilterSummary() {
 
     switch (currentDateFilter) {
         case 'anytime':
-            summaryText = 'Showing conversations from all time';
+            summaryText = 'All conversations';
             break;
         case 'today':
-            summaryText = 'Showing conversations from today';
+            summaryText = 'Today only';
             break;
         case 'yesterday':
-            summaryText = 'Showing conversations from yesterday';
+            summaryText = 'Yesterday only';
             break;
         case 'thisWeek':
-            summaryText = 'Showing conversations from this week';
+            summaryText = 'This week';
             break;
         case 'lastWeek':
-            summaryText = 'Showing conversations from last week';
+            summaryText = 'Last week';
             break;
         case 'thisMonth':
-            summaryText = 'Showing conversations from this month';
+            summaryText = 'This month';
             break;
         case 'custom':
             if (customStartDate && customEndDate) {
                 const start = new Date(customStartDate).toLocaleDateString();
                 const end = new Date(customEndDate).toLocaleDateString();
-                summaryText = `Showing conversations from ${start} to ${end}`;
+                summaryText = `${start} to ${end}`;
             } else {
-                summaryText = 'Select start and end dates';
+                summaryText = 'Select date range';
             }
             break;
     }
 
     $('#date-filter-summary').text(summaryText);
+    $('#date-status').text(summaryText);
 }
 
 function getDateFilterDisplayText() {
