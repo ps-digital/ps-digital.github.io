@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Genesys Cloud WhatsApp Campaign MPM Analyzer</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+            .container {
+                background-color: white;
+                padding: 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                color: #333;
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .controls {
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            .input-group {
+                margin: 10px 0;
+            }
+            label {
+                display: inline-block;
+                width: 120px;
+                text-align: right;
+                margin-right: 10px;
+            }
+            input[type='text'] {
+                padding: 8px;
+                width: 300px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+            button {
+                padding: 10px 20px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            button:disabled {
+                background-color: #ccc;
+                cursor: not-allowed;
+            }
+            .results {
+                margin-top: 30px;
+            }
+            .summary {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 20px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            th,
+            td {
+                border: 1px solid #ddd;
+                padding: 12px;
+                text-align: left;
+            }
+            th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }
+            .error {
+                color: red;
+                margin: 10px 0;
+            }
+            .success {
+                color: green;
+                margin: 10px 0;
+            }
+            .loading {
+                text-align: center;
+                padding: 20px;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Genesys Cloud WhatsApp Campaign MPM Analyzer</h1>
+
+            <div class="controls">
+                <div class="input-group">
+                    <button id="refreshBtn">Refresh Results</button>
+                </div>
+            </div>
+
+            <div id="errorDiv" class="error hidden"></div>
+            <div id="successDiv" class="success hidden"></div>
+
+            <div id="loadingDiv" class="loading hidden">Loading...</div>
+
+            <div id="resultsDiv" class="results hidden">
+                <div class="summary" id="summaryDiv"></div>
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Campaign Name</th>
+                            <th>Status</th>
+                            <th>MPM (Messages Per Minute)</th>
+                            <th>Always Running</th>
+                            <th>Campaign ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                document.addEventListener('DOMContentLoaded', function () {
+                    const refreshBtn = document.getElementById('refreshBtn');
+                    const errorDiv = document.getElementById('errorDiv');
+                    const successDiv = document.getElementById('successDiv');
+                    const loadingDiv = document.getElementById('loadingDiv');
+                    const resultsDiv = document.getElementById('resultsDiv');
+                    const summaryDiv = document.getElementById('summaryDiv');
+                    const resultsBody = document.getElementById('resultsBody');
+
+                    // Environment-based client ID mapping
+                    const clientIds = {
+                        dev: '7c8a824a-9afe-4457-84b9-e8e6e9aad877',
+                        test: '7c8a824a-9afe-4457-84b9-e8e6e9aad877',
+                        prod: '7c8a824a-9afe-4457-84b9-e8e6e9aad877',
+                    };
+
+                    // Check if we're returning from OAuth with a token in the hash
+                    const hash = window.location.hash.substring(1);
+                    if (hash) {
+                        const params = new URLSearchParams(hash);
+                        const accessToken = params.get('access_token');
+
+                        if (accessToken) {
+                            history.replaceState({}, document.title, window.location.pathname + window.location.search);
+
+                            // Retrieve the stored client_id and region
+                            const storedClientId = sessionStorage.getItem('clientId');
+                            const storedRegion = sessionStorage.getItem('region') || 'mec1.pure.cloud';
+                            sessionStorage.setItem('accessToken', accessToken);
+
+                            if (storedClientId) {
+                                // Run the analysis with the retrieved token
+                                runAnalysis(accessToken, storedRegion);
+                            }
+                        }
+                    }
+
+                    // Get environment from URL query parameter
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const env = urlParams.get('env') || 'dev';
+                    const urlRegion = urlParams.get('region') || 'mec1.pure.cloud';
+
+                    // Use the appropriate client_id based on environment
+                    const clientId = clientIds[env] || clientIds['dev'];
+                    const region = urlRegion || sessionStorage.getItem('region') || 'mec1.pure.cloud';
+
+                    if (clientId) {
+                        analyzeCampaigns();
+                    }
+
+                    async function analyzeCampaigns() {
+                        const storedAccessToken = sessionStorage.getItem('accessToken');
+                        const storedRegion = sessionStorage.getItem('region') || 'mec1.pure.cloud';
+
+                        if (storedAccessToken) {
+                            runAnalysis(storedAccessToken, storedRegion);
+                        } else {
+                            if (!clientId) {
+                                showError('No client_id provided in URL or stored in session');
+                                return;
+                            }
+
+                            clearMessages();
+                            showLoading(true);
+
+                            try {
+                                const token = await exchangeToken(clientId, region);
+                            } catch (error) {
+                                showError('Error: ' + error.message);
+                                console.error('Full error:', error);
+                                showLoading(false);
+                            }
+                        }
+                    }
+
+                    function exchangeToken(clientId, region) {
+                        return new Promise((resolve, reject) => {
+                            sessionStorage.setItem('clientId', clientId);
+                            sessionStorage.setItem('region', region);
+
+                            const currentUrl = window.location.href;
+                            const authUrl =
+                                `https://login.${region}/oauth/authorize?` + `client_id=${clientId}&` + `response_type=token&` + `redirect_uri=${encodeURIComponent(currentUrl)}&` + `state=temp_state`;
+
+                            window.location.href = authUrl;
+                        });
+                    }
+
+                    // Add click event for refresh button
+                    refreshBtn.addEventListener('click', function () {
+                        const storedAccessToken = sessionStorage.getItem('accessToken');
+                        const storedRegion = sessionStorage.getItem('region') || 'mec1.pure.cloud';
+
+                        if (storedAccessToken) {
+                            runAnalysis(storedAccessToken, storedRegion);
+                        } else {
+                            // If no stored token, trigger the auth flow
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const env = urlParams.get('env') || 'dev';
+                            const urlRegion = urlParams.get('region') || 'mec1.pure.cloud';
+
+                            // Use the appropriate client_id based on environment
+                            const clientId = clientIds[env] || clientIds['dev'];
+                            const region = urlRegion || sessionStorage.getItem('region') || 'mec1.pure.cloud';
+
+                            if (clientId) {
+                                analyzeCampaigns();
+                            } else {
+                                showError('No client_id available for authentication');
+                            }
+                        }
+                    });
+
+                    async function runAnalysis(accessToken, region) {
+                        clearMessages();
+                        showLoading(true);
+
+                        try {
+                            const results = await fetchCampaigns(accessToken, region);
+                            displayResults(results);
+                            showSuccess('Analysis completed successfully!');
+                        } catch (error) {
+                            showError('Error: ' + error.message);
+                            console.error('Full error:', error);
+                        } finally {
+                            showLoading(false);
+                        }
+                    }
+
+                    // Make runAnalysis globally accessible so the refresh button can call it
+                    window.runAnalysis = runAnalysis;
+
+                    async function fetchCampaigns(accessToken, region) {
+                        const baseUrl = `https://api.${region}`;
+                        let allCampaigns = [];
+                        let pageNumber = 1;
+                        let hasMorePages = true;
+
+                        // Fetch all pages of campaigns
+                        while (hasMorePages) {
+                            const campaignsResponse = await fetch(`${baseUrl}/api/v2/outbound/messagingcampaigns?pageSize=100&pageNumber=${pageNumber}&sortBy=name&sortOrder=ascending`, {
+                                headers: {
+                                    Authorization: `Bearer ${accessToken}`,
+                                    'Content-Type': 'application/json',
+                                },
+                            });
+
+                            if (!campaignsResponse.ok) {
+                                const errorText = await campaignsResponse.text();
+                                throw new Error(`API Error: ${campaignsResponse.status} - ${campaignsResponse.statusText}\n${errorText}`);
+                            }
+
+                            const campaignsData = await campaignsResponse.json();
+                            const pageCampaigns = campaignsData.entities || [];
+                            allCampaigns = allCampaigns.concat(pageCampaigns);
+
+                            // Check if there are more pages
+                            if (pageCampaigns.length < 100) {
+                                hasMorePages = false;
+                            } else {
+                                pageNumber++;
+                            }
+                        }
+
+                        // Filter for RUNNING WhatsApp campaigns (campaignStatus = "on")
+                        const runningCampaigns = allCampaigns.filter((campaign) => {
+                            return campaign.campaignStatus === 'on' && campaign.whatsAppConfig;
+                        });
+
+                        // Build the results
+                        const results = [];
+                        let totalMPM = 0;
+
+                        for (const campaign of runningCampaigns) {
+                            const mpm = campaign.messagesPerMinute || 0;
+
+                            results.push({
+                                'Campaign Name': campaign.name,
+                                Status: campaign.campaignStatus,
+                                'MPM (Messages Per Minute)': mpm,
+                                'Always Running': campaign.alwaysRunning ? 'Yes' : 'No',
+                                'Campaign ID': campaign.id,
+                            });
+
+                            totalMPM += mpm;
+                        }
+
+                        return {
+                            campaigns: results,
+                            totalMPM: totalMPM,
+                            numberOfCampaigns: runningCampaigns.length,
+                            region: region,
+                            rawData: runningCampaigns,
+                        };
+                    }
+
+                    function displayResults(results) {
+                        // Clear previous results
+                        resultsBody.innerHTML = '';
+
+                        // Display summary
+                        const totalRemainingMPM = 5400 - results.totalMPM;
+                        summaryDiv.innerHTML = `
+                        <h3>📊 RUNNING WHATSAPP CAMPAIGNS MPM SUMMARY</h3>
+                        <p><strong>📈 TOTAL MPM USED (Running Campaigns):</strong> ${results.totalMPM}</p>
+                        <p><strong>📊 NUMBER OF RUNNING CAMPAIGNS:</strong> ${results.numberOfCampaigns}</p>
+                        <p><strong>📊 TOTAL REMAINING MPM:</strong> ${totalRemainingMPM}</p>
+                        <p><strong>📊 % ALLOCATED FOR INBOUND/ON-DEMAND:</strong> 10%</p>
+                    `;
+
+                        // Display table rows
+                        results.campaigns.forEach((campaign) => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                            <td>${campaign['Campaign Name']}</td>
+                            <td>${campaign.Status}</td>
+                            <td>${campaign['MPM (Messages Per Minute)']}</td>
+                            <td>${campaign['Always Running']}</td>
+                            <td>${campaign['Campaign ID']}</td>
+                        `;
+                            resultsBody.appendChild(row);
+                        });
+
+                        resultsDiv.classList.remove('hidden');
+                    }
+
+                    function showError(message) {
+                        errorDiv.textContent = message;
+                        errorDiv.classList.remove('hidden');
+                    }
+
+                    function showSuccess(message) {
+                        successDiv.textContent = message;
+                        successDiv.classList.remove('hidden');
+                    }
+
+                    function showLoading(show) {
+                        if (show) {
+                            loadingDiv.classList.remove('hidden');
+                            refreshBtn.disabled = true;
+                        } else {
+                            loadingDiv.classList.add('hidden');
+                            refreshBtn.disabled = false;
+                        }
+                    }
+
+                    function clearMessages() {
+                        errorDiv.classList.add('hidden');
+                        successDiv.classList.add('hidden');
+                    }
+
+                    function clearResults() {
+                        resultsBody.innerHTML = '';
+                        summaryDiv.innerHTML = '';
+                        resultsDiv.classList.add('hidden');
+                        clearMessages();
+                    }
+                });
+            })();
+        </script>
+    </body>
+</html>
